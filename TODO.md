@@ -1,0 +1,12 @@
+- [ ] Cut down on copies when returning py::array_t types (pointer management via capsules)
+- [x] Naive ECP computation
+- [x] Optimized euler_changes computation
+- [ ] Optimized computation of EC of binary images (Yao et al.)
+- [x] Optimized computation of EC of binary images (Gray)
+- [ ] Implement ECC algorithm (non-streaming) by Heiss & Wagner (for "naive" efficient ECP computation)
+- [ ] Implement naive ECP algorithm in three parameters
+- [ ] Implement generalized ECS algorithm in three parameters
+- [ ] Implement general ECP algorithm by Dlotko & Gurnari
+- [x] More general testing suite (benchmark n functions against each other by specifing a data generating function)
+- [ ] Second Matrix constructor taking py::array_t so we dont need to copy the entries from py::arrat_t to std::vector
+- [ ] Reorganize the repository
