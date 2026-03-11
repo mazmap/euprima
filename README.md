@@ -10,3 +10,5 @@ Once the thesis is finished, it will also be linked to from this README.
 At the moment this repository is still very much a **work in progress** and hence very unorganized and messy. 
 Once I finally come up with a better (i.e. more organized) folder structure, this repository will be reorganized accordingly. 
 
+Lastly, it should be noted that this project reimplements a few of the functions from the [`euchar`](https://github.com/gbeltramo/euchar) package in a much more efficient way. 
+More details around this reimplementation will be given in the near future. 
