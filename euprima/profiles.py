@@ -23,19 +23,20 @@ import testing_utils
 #print(ec_gray);
 #print(ec_yao);
 
-img_c1 = np.random.randint(0, 256, (10,10), dtype=np.uint8)
-img_c2 = np.random.randint(0, 256, (10,10), dtype=np.uint8)
+img_c1 = np.random.randint(0, 6, (5,5), dtype=np.uint8)
+img_c2 = np.random.randint(0, 6, (5,5), dtype=np.uint8)
+img_c3 = np.random.randint(0, 6, (5,5), dtype=np.uint8)
 
 euler_changes = euchar.utils.vector_all_euler_changes_in_2D_images()
 
-ecp = euprima.ecp_2d2c(img_c1, img_c2, euler_changes, 255, 255);
-ecp_euchar = euchar.surface.images_2D(img_c1, img_c2, euler_changes, 255, 255);
-ecp_naive = euprima.ecp_2d2c_naive(img_c1, img_c2, 255, 255);
+ecp = euprima.ecp_2d2c(img_c1, img_c2, euler_changes, 5, 5);
+ecp_euchar = euchar.surface.images_2D(img_c1, img_c2, euler_changes, 5, 5);
+ecp_naive = euprima.ecp_2d2c_naive(img_c1, img_c2, 5, 5);
 euler_changes_euprima = euprima.euler_changes_2d();
 
 testing_utils.check_pairwise_equality([ecp,ecp_euchar,ecp_naive], labels=["euprima","euchar","euprima_naive"])
 
 testing_utils.check_pairwise_equality([euler_changes, euler_changes_euprima], labels=["euchar", "euprima"])
 
-print(euler_changes)
-print(euler_changes_euprima)
+ecp3_naive = euprima.ecp_2d3c_naive(img_c1, img_c2, img_c3, 5, 5, 5)
+print(ecp3_naive)

@@ -10,3 +10,4 @@
 - [x] More general testing suite (benchmark n functions against each other by specifing a data generating function)
 - [ ] Second Matrix constructor taking py::array_t so we dont need to copy the entries from py::arrat_t to std::vector
 - [ ] Reorganize the repository
+- [ ] Rewrite Matrix<int> or py::array<int> to use size_t as the implementations to not allow for negative values either way

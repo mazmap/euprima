@@ -12,33 +12,83 @@ namespace py = pybind11;
 
 template <typename T>
 class Matrix {
-public:
+private:
     std::vector<T> data;
-    size_t rows;
-    size_t cols;
+    std::vector<size_t> shape;
+    std::vector<size_t> strides; // possible optimization by using std::array instead
 
-    Matrix(size_t r, size_t c, T init_val = 0) 
-        : rows(r), cols(c), data(r * c, init_val) {}
+    size_t idx(const std::vector<size_t> &indices) const {
+	size_t idx = 0;
+	for(size_t i=0; i<indices.size(); ++i) {
+	    idx += indices[i] * strides[i];
+	}
+	return idx;
+    }
+public:
+    Matrix(std::initializer_list<size_t> dims, T init_val = T())
+	: shape(dims), strides(dims.size()) {
+	
+	size_t total_size = 1;
+	for(auto d : shape) total_size *=d;
+	data.assign(total_size, init_val);
 
-    // Safe access with range checking
-    T& at(size_t r, size_t c) {
-        if (r >= rows || c >= cols) {
-            throw std::out_of_range("Matrix index out of bounds");
-        }
-        return data[r*cols + c];
+	// Strides for row-major order
+	size_t current_stride = 1;
+	for(int i=shape.size()-1; i>=0; --i) {
+	    strides[i] = current_stride;
+	    current_stride *= shape[i];
+	}
     }
 
-    // Fast access (no checks)
-    T& operator()(size_t r, size_t c) { return data[r*cols + c]; }
+    template<typename... Args>
+    T& operator()(Args... args) {
+	static_assert(sizeof...(Args) > 0, "Matrix requires at least one index");
 
-    const T& operator()(size_t r, size_t c) const { return data[r*cols + c]; }
+	size_t idx = 0;
+	size_t dim = 0;
+
+	// "comma-fold" suggested by Gemini
+	([&] {
+	    idx += static_cast<size_t>(args)*strides[dim++];
+	 } (), ...);
+
+	return data[idx];
+    }
+
+    template<typename... Args>
+    const T& operator()(Args... args) const {
+	static_assert(sizeof...(Args) > 0, "Matrix requires at least one index");
+
+	size_t idx = 0;
+	size_t dim = 0;
+
+	// "comma-fold" suggested by Gemini
+	([&] {
+	    idx += static_cast<size_t>(args)*strides[dim++];
+	 } (), ...);
+
+	return data[idx];
+    }
+
+
+    size_t dim(size_t index) {
+	return shape[index];
+    }
+
+    const size_t dim(size_t index) const {
+	return shape[index];
+    }
+
+    T* data_ptr() {
+	return data.data();
+    }
 };
 
 template <typename T>
 std::ostream& operator<<(std::ostream& os, const Matrix<T>& mat) {
-    for (size_t i = 0; i < mat.rows; ++i) {
+    for (size_t i = 0; i < mat.dim(0); ++i) {
         os << "[ ";
-        for (size_t j = 0; j < mat.cols; ++j) {
+        for (size_t j = 0; j < mat.dim(1); ++j) {
             // Using setw(4) keeps columns aligned even with different digit counts
             os << std::setw(4) << mat(i, j) << " ";
         }
@@ -60,8 +110,8 @@ std::bitset<N> reverse(std::bitset<N> b) {
 
 // bool vs uint_8!
 int ec_binary_image_2d_naive(Matrix<uint8_t> &image) {
-    size_t num_rows = image.rows;
-    size_t num_cols = image.cols;
+    size_t num_rows = image.dim(0);
+    size_t num_cols = image.dim(1);
 
     int v = 0;
     int e = 0;
@@ -243,8 +293,8 @@ int py_ec_binary_image_2d_naive(py::array_t<uint8_t> image) {
 
 int sum_bool_2d(Matrix<uint8_t> &matrix)
 {
-    size_t numI = matrix.rows;
-    size_t numJ = matrix.cols;
+    size_t numI = matrix.dim(0);
+    size_t numJ = matrix.dim(1);
 
     int total = 0;
     for (size_t i = 0; i < numI; ++i) {
@@ -284,9 +334,9 @@ int char_binary_image_2d(py::array_t<uint8_t> input)
     size_t numJ = img.shape(1);
 
     // Matrices for vectices, horizontal edges and vertical edges
-    Matrix<uint8_t> V(numI+1,numJ+1,0);
-    Matrix<uint8_t> Eh(numI+1,numJ,0);
-    Matrix<uint8_t> Ev(numI, numJ+1,0);
+    Matrix<uint8_t> V({numI+1,numJ+1},0);
+    Matrix<uint8_t> Eh({numI+1,numJ},0);
+    Matrix<uint8_t> Ev({numI, numJ+1},0);
 
     // Loop over pixels to update V, Eh, Ev
     for (size_t i = 0; i < numI; ++i) {
@@ -385,7 +435,7 @@ int py_ec_binary_image_2d_yao(py::array_t<uint8_t> image) {
     size_t num_rows = uimg.shape(0);
     size_t num_cols = uimg.shape(1);
 
-    Matrix<uint8_t> img(num_rows+2,num_cols+2,0);
+    Matrix<uint8_t> img({num_rows+2,num_cols+2},0);
     for(size_t i = 1; i < num_rows+1; ++i) {
 	for(size_t j = 1; j < num_cols+1; ++j) {
 	    img(i,j) = uimg(i-1,j-1);
@@ -444,7 +494,7 @@ Matrix<uint8_t> py_binary_threshold_image_2d(py::array_t<int> image, int val) {
     size_t num_rows = img.shape(0);
     size_t num_cols = img.shape(1);
 
-    Matrix<uint8_t> thresholded_img(num_rows,num_cols,0);
+    Matrix<uint8_t> thresholded_img({num_rows,num_cols},0);
 
     for(size_t i=0; i<num_rows; i++) {
 	for(size_t j=0; j<num_cols; j++) {
@@ -455,15 +505,17 @@ Matrix<uint8_t> py_binary_threshold_image_2d(py::array_t<int> image, int val) {
     return thresholded_img;
 }
 
-Matrix<uint8_t> elementwise_AND_2d(Matrix<uint8_t> &image1, Matrix<uint8_t> &image2) {
-    size_t num_rows = image1.rows;
-    size_t num_cols = image1.cols;
+// ATTENTION: The following specification is not safe at all as Args accepts ANY type, not just matrices!
+template<typename... Args>
+Matrix<uint8_t> elementwise_AND_2d(const Matrix<uint8_t> &image1, const Args&... images) {
+    Matrix<uint8_t> result = image1;
 
-    Matrix<uint8_t> result(num_rows, num_cols, 0);
+    size_t num_rows = image1.dim(0);
+    size_t num_cols = image1.dim(1);
 
     for(size_t i=0; i<num_rows; i++){
 	for(size_t j=0; j<num_cols; j++) {
-	    result(i,j) = image1(i,j) && image2(i,j);
+	    result(i,j) = (result(i,j) && ... && images(i,j));
 	}
     }
 
@@ -471,11 +523,12 @@ Matrix<uint8_t> elementwise_AND_2d(Matrix<uint8_t> &image1, Matrix<uint8_t> &ima
 }
 
 py::array_t<int> py_ecp_2d2c_naive(py::array_t<int> image_c1, py::array_t<int> image_c2, int T1, int T2) {
-    Matrix<int> ecp(T1+1,T2+1,0);
+    Matrix<int> ecp({static_cast<size_t>(T1+1),static_cast<size_t>(T2+1)},0);
 
     for(int i=0; i<=T1; i++) {
+	Matrix<uint8_t> thresholded_img_c1 = py_binary_threshold_image_2d(image_c1, i);
+
 	for(int j=0; j<=T2; j++) {
-	    Matrix<uint8_t> thresholded_img_c1 = py_binary_threshold_image_2d(image_c1, i);
 	    Matrix<uint8_t> thresholded_img_c2 = py_binary_threshold_image_2d(image_c2, j);
 	    Matrix<uint8_t> Kij = elementwise_AND_2d(thresholded_img_c1, thresholded_img_c2);
 	    ecp(i,j) = ec_binary_image_2d_naive(Kij);
@@ -483,9 +536,8 @@ py::array_t<int> py_ecp_2d2c_naive(py::array_t<int> image_c1, py::array_t<int> i
     }
 
     return py::array_t<int>(
-	{ecp.rows, ecp.cols},
-	{ecp.cols*sizeof(int), sizeof(int)},
-	ecp.data.data()
+	{ecp.dim(0), ecp.dim(1)},
+	ecp.data_ptr()
     );
 }
 
@@ -530,7 +582,7 @@ Matrix<int> pad_img_2d(py::array_t<int> image, int val) {
     size_t N = img.shape(0);
     size_t M = img.shape(1);
 
-    Matrix<int> padded_img(N+2, M+2, val);
+    Matrix<int> padded_img({N+2, M+2}, val);
 
     for(size_t i=1; i < N+1; ++i) {
 	for(size_t j=1; j<M+1; ++j) {
@@ -547,17 +599,17 @@ py::array_t<int> ecp_2d2c(py::array_t<int> image_c1, py::array_t<int> image_c2, 
     size_t N = image_c1.shape(0);
     size_t M = image_c1.shape(1);
 
-    Matrix<int> ecp(T1+1, T2+1, 0);
+    Matrix<int> ecp({static_cast<size_t>(T1+1), static_cast<size_t>(T2+1)}, 0);
 
     Matrix<int> padded_img_c1 = pad_img_2d(image_c1, T1+1);
     Matrix<int> padded_img_c2 = pad_img_2d(image_c2, T2+1);
 
-    for(size_t i=1; i < N+1; ++i) {
+    for(size_t i=1; i<N+1; ++i) {
 	for(size_t j=1; j<M+1; ++j) {
 	    int r = padded_img_c1(i,j); 
 	    std::bitset<8> binary_neigh1 = neigh_matrix_lex(padded_img_c1, i, j, r);
 
-	    std::vector<int> thresholds2(10, T2+1);
+	    std::vector<int> thresholds2(10, T2+1); // can be an array
 	    int s = padded_img_c2(i,j);
 	    for(size_t p=0; p<3; ++p) {
 		for(size_t q=0; q<3; ++q) {
@@ -601,9 +653,8 @@ py::array_t<int> ecp_2d2c(py::array_t<int> image_c1, py::array_t<int> image_c2, 
 */
 
     return py::array_t<int>(
-        {ecp.rows, ecp.cols},       // Shape
-	{ecp.cols*sizeof(int),sizeof(int)},
-	ecp.data.data()
+        {ecp.dim(0), ecp.dim(1)},       // Shape
+	ecp.data_ptr()
     );
 }
 
@@ -636,7 +687,7 @@ int euler_change_neigh_matrix(int bin_neigh) {
 }
 
 Matrix<int> euler_changes_2d() {
-    Matrix<int> euler_changes(256,1,0);
+    Matrix<int> euler_changes({256,1},0);
 
     for(int i=0; i<256; i++) {
 	euler_changes(i,0) = euler_change_neigh_matrix(i);
@@ -650,7 +701,30 @@ py::array_t<int> py_euler_changes_2d() {
 
     return py::array_t<int>(
 	256,
-	euler_changes.data.data()
+	euler_changes.data_ptr()
+    );
+}
+
+py::array_t<int> py_ecp_2d3c_naive(py::array_t<int> image_c1, py::array_t<int> image_c2, py::array_t<int> image_c3, int T1, int T2, int T3) {
+    Matrix<int> ecp({static_cast<size_t>(T1+1),static_cast<size_t>(T2+1),static_cast<size_t>(T3+1)},0);
+
+    for(int r=0; r<=T1; r++) {
+	Matrix<uint8_t> thresholded_img_c1 = py_binary_threshold_image_2d(image_c1, r);
+
+	for(int s=0; s<=T2; s++) {
+	    Matrix<uint8_t> thresholded_img_c2 = py_binary_threshold_image_2d(image_c2, s);
+
+	    for(int t=0; t<=T3; t++) {
+		Matrix<uint8_t> thresholded_img_c3 = py_binary_threshold_image_2d(image_c3, t);
+		Matrix<uint8_t> K_rst = elementwise_AND_2d(thresholded_img_c1, thresholded_img_c2, thresholded_img_c3);
+		ecp(r,s,t) = ec_binary_image_2d_naive(K_rst);
+	    }
+	}
+    }
+
+    return py::array_t<int>(
+	{ecp.dim(0), ecp.dim(1), ecp.dim(2)},
+	ecp.data_ptr()
     );
 }
 
@@ -662,4 +736,5 @@ PYBIND11_MODULE(euprima, m) {
     m.def("ecp_2d2c_naive", &py_ecp_2d2c_naive, "Euler characteristic profile computed without any optimizations");
     m.def("ecp_2d2c", &ecp_2d2c, "ECP of a two-dimensional two-channel image");
     m.def("euler_changes_2d", &py_euler_changes_2d, "Vector of all possible changes in Euler characteristic");
+    m.def("ecp_2d3c_naive", &py_ecp_2d3c_naive, "Euler characteristic profile computed without any optimizations");
 }
