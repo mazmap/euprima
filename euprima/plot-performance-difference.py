@@ -41,11 +41,11 @@ def plot_absolute_difference(csv_filename):
     plt.grid(True, linestyle='--', alpha=0.6)
     
     # 4. Save and show the plot
-    plt.savefig('absolute_difference_plot.pdf')
-    print("Plot has been saved as 'absolute_difference_plot.png'")
+    plt.savefig('improvement_binary_ec.pdf')
+    print("Plot has been saved as 'improvement_binary_ec.pdf'")
 
 # Replace 'your_file.csv' with the actual name of your CSV file
 if __name__ == "__main__":
     # Example usage:
-    plot_absolute_difference('benchmark.csv')
+    plot_absolute_difference('benchmark_binary_ec.csv')
     pass

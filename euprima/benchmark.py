@@ -20,7 +20,7 @@ def input_generator(n):
         for _ in range(samples_per_n+1)
     ]
 
-ig_args = range(1,51)
+ig_args = range(1,101)
 
 summary1 = testing_utils.benchmark(euprima.ecp_2d2c, input_generator, ig_args)
 summary2 = testing_utils.benchmark(euchar.surface.images_2D, input_generator, ig_args)

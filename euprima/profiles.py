@@ -39,4 +39,8 @@ testing_utils.check_pairwise_equality([ecp,ecp_euchar,ecp_naive], labels=["eupri
 testing_utils.check_pairwise_equality([euler_changes, euler_changes_euprima], labels=["euchar", "euprima"])
 
 ecp3_naive = euprima.ecp_2d3c_naive(img_c1, img_c2, img_c3, 5, 5, 5)
+ecp3 = euprima.ecp_2d3c(img_c1, img_c2, img_c3, euler_changes, 5, 5, 5)
+testing_utils.check_pairwise_equality([ecp3, ecp3_naive], labels=["exp3","exp3_naive"])
+
 print(ecp3_naive)
+print(ecp3)

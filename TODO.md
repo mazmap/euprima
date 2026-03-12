@@ -4,10 +4,13 @@
 - [ ] Optimized computation of EC of binary images (Yao et al.)
 - [x] Optimized computation of EC of binary images (Gray)
 - [ ] Implement ECC algorithm (non-streaming) by Heiss & Wagner (for "naive" efficient ECP computation)
-- [ ] Implement naive ECP algorithm in three parameters
-- [ ] Implement generalized ECS algorithm in three parameters
+- [x] Implement naive ECP algorithm in three parameters
+- [x] Implement generalized ECS algorithm in three parameters
 - [ ] Implement general ECP algorithm by Dlotko & Gurnari
 - [x] More general testing suite (benchmark n functions against each other by specifing a data generating function)
 - [ ] Second Matrix constructor taking py::array_t so we dont need to copy the entries from py::arrat_t to std::vector
 - [ ] Reorganize the repository
 - [ ] Rewrite Matrix<int> or py::array<int> to use size_t as the implementations to not allow for negative values either way
+- [x] Rewrite the Matrix class to use std::array for strides and not std::vector | Absolutely no performance improvement
+- [x] For now write a Matrix2D and a Matrix3D class (ugly solution but should bring no performance penalty)
+- [x] euler_changes needs no Matrix wrapper. Just rewrite with std::array<int,256>. 
