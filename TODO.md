@@ -1,9 +1,10 @@
 - [ ] Cut down on copies when returning py::array_t types (pointer management via capsules)
 - [x] Naive ECP computation
 - [x] Optimized euler_changes computation
-- [ ] Optimized computation of EC of binary images (Yao et al.)
+- [x] Optimized computation of EC of binary images (Yao et al.) | Not working
 - [x] Optimized computation of EC of binary images (Gray)
 - [ ] Implement ECC algorithm (non-streaming) by Heiss & Wagner (for "naive" efficient ECP computation)
+- [ ] Implement "naive optimization" suggested by Beltramo in Section 3.4 in his PhD thesis | So far just for the 2d2c case
 - [x] Implement naive ECP algorithm in three parameters
 - [x] Implement generalized ECS algorithm in three parameters
 - [ ] Implement general ECP algorithm by Dlotko & Gurnari

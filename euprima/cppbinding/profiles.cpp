@@ -594,6 +594,21 @@ Matrix<uint8_t,2> elementwise_AND_2d(const Matrix<uint8_t,2> &image1, const Args
     return result;
 }
 
+Matrix<uint8_t,2> elementwise_AND_2d(const Matrix<uint8_t,2> &image1, const Matrix<uint8_t,2> &image2) {
+    Matrix<uint8_t,2> result = image1;
+
+    size_t num_rows = image1.dim(0);
+    size_t num_cols = image1.dim(1);
+
+    for(size_t i=0; i<num_rows; i++){
+	for(size_t j=0; j<num_cols; j++) {
+	    result(i,j) = (result(i,j) && image2(i,j));
+	}
+    }
+
+    return result;
+}
+
 py::array_t<int> py_ecp_2d2c_naive(py::array_t<int> image_c1, py::array_t<int> image_c2, int T1, int T2) {
     Matrix<int,2> ecp(static_cast<size_t>(T1+1),static_cast<size_t>(T2+1),0);
 
@@ -889,6 +904,64 @@ py::array_t<int> py_ecp_2d3c(py::array_t<int> image_c1, py::array_t<int> image_c
 	ecp.data_ptr()
     );
 }
+// Heiss & Wagner
+py::array_t<int> py_ecp_2d2c_hw(py::array_t<int> image_c1, py::array_t<int> image_c2, int T1, int T2) {
+    Matrix<int,2> pad_img_c1 = pad_img_2d(image_c1,T1+1);
+    Matrix<int,2> pad_img_c2 = pad_img_2d(image_c2,T2+1);
+
+    size_t num_rows = image_c2.shape(0);
+    size_t num_cols = image_c2.shape(1); 
+
+    Matrix<int, 2> ecp(T1+1, T2+1, 0);
+
+    for(size_t s=0; s<=T2; ++s) {
+	for(size_t i=1; i<num_rows+1; ++i) {
+	    for(size_t j=1; j<num_cols+1; ++j) {
+		if(pad_img_c2(i,j) <= s) {
+		    int val = pad_img_c1(i,j);
+
+		    int n1 = pad_img_c2(i-1,j-1) <= s ? pad_img_c1(i-1,j-1) : T1+1;
+		    int n2 = pad_img_c2(i-1,j) <= s ? pad_img_c1(i-1,j) : T1+1;
+		    int n3 = pad_img_c2(i-1,j+1) <= s ? pad_img_c1(i-1,j+1) : T1+1;
+		    int n4 = pad_img_c2(i,j-1) <= s ? pad_img_c1(i,j-1) : T1+1;
+		    int n6 = pad_img_c2(i,j+1) <= s ? pad_img_c1(i,j+1) : T1+1;
+		    int n7 = pad_img_c2(i+1,j-1) <= s ? pad_img_c1(i+1,j-1) : T1+1;
+		    int n8 = pad_img_c2(i+1,j) <= s ? pad_img_c1(i+1,j) : T1+1;
+		    int n9 = pad_img_c2(i+1,j+1) <= s ? pad_img_c1(i+1,j+1) : T1+1;
+
+		    int change = 0;
+
+		    // square
+		    change += 1;
+
+		    // edges
+		    change -= n2 >= val; // top edge
+		    change -= n6 > val; // right edge
+		    change -= n8 > val; // bottom edge
+		    change -= n4 >= val; // left edge
+		    
+		    // vertices
+		    change += n1 >= val && n2 >= val && n4 >= val; // top-left vertex 
+		    change += n2 >= val && n3 >= val && n6 > val; // top-right vertex 
+		    change += n4 >= val && n7 > val && n8 > val; // bottom-left vertex 
+		    change += n6 > val && n8 > val && n9  > val; // bottom-right vertex 
+
+		    ecp(val,s) += change;
+		}
+	    }
+	}
+
+	// cummulative sum
+	for(size_t r=1; r<=T1; ++r) {
+	    ecp(r,s) += ecp(r-1,s);
+	}
+    }
+
+    return py::array_t<int>(
+	{ecp.dim(0), ecp.dim(1)},
+	ecp.data_ptr()
+    );
+}
 
 PYBIND11_MODULE(euprima, m) {
     m.def("ec_binary_image_2d_naive", &py_ec_binary_image_2d_naive, "Euler characteristic of a binary 2d image without and optimizations");
@@ -900,4 +973,5 @@ PYBIND11_MODULE(euprima, m) {
     m.def("euler_changes_2d", &py_euler_changes_2d, "Vector of all possible changes in Euler characteristic");
     m.def("ecp_2d3c_naive", &py_ecp_2d3c_naive, "Euler characteristic profile computed without any optimizations");
     m.def("ecp_2d3c", &py_ecp_2d3c, "Euler characteristic profile computed with the most efficient algorithm yet");
+    m.def("ecp_2d2c_hw", &py_ecp_2d2c_hw, "Euler characteristic profile computed the efficient Heiss/Wagner algorithm for ECCs");
 }
