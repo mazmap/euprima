@@ -963,6 +963,334 @@ py::array_t<int> py_ecp_2d2c_hw(py::array_t<int> image_c1, py::array_t<int> imag
     );
 }
 
+py::array_t<int> py_ecp_2d2c_hw_optimized(py::array_t<int> image_c1, py::array_t<int> image_c2, int T1, int T2) {
+    Matrix<int,2> pad_img_c1 = pad_img_2d(image_c1,T1+1);
+    Matrix<int,2> pad_img_c2 = pad_img_2d(image_c2,T2+1);
+
+    size_t num_rows = image_c2.shape(0);
+    size_t num_cols = image_c2.shape(1); 
+
+    Matrix<int, 2> ecp(T1+1, T2+1, 0);
+
+    for(size_t i=1; i<num_rows+1; ++i) {
+	for(size_t j=1; j<num_cols+1; ++j) {
+	    std::vector<int> thresholds2(10, T2+1); // can be an array
+	    int s = pad_img_c2(i,j);
+	    for(size_t p=0; p<3; ++p) {
+		for(size_t q=0; q<3; ++q) {
+		    int val = pad_img_c2(i-1+p,j-1+q);
+		    if(val >= s)
+			thresholds2[q+p*3] = val;
+		}
+	    }
+	    sort(thresholds2.begin(), thresholds2.end());
+	    auto last = unique(thresholds2.begin(), thresholds2.end());
+	    thresholds2.erase(last, thresholds2.end());
+
+	    for(size_t z=0; z < thresholds2.size()-1; ++z) {
+		size_t start = static_cast<size_t>(thresholds2[z]);
+		size_t end = static_cast<size_t>(thresholds2[z+1]);
+
+		int s = thresholds2[z];
+
+		int val = pad_img_c1(i,j);
+
+		int n1 = pad_img_c2(i-1,j-1) <= s ? pad_img_c1(i-1,j-1) : T1+1;
+		int n2 = pad_img_c2(i-1,j) <= s ? pad_img_c1(i-1,j) : T1+1;
+		int n3 = pad_img_c2(i-1,j+1) <= s ? pad_img_c1(i-1,j+1) : T1+1;
+		int n4 = pad_img_c2(i,j-1) <= s ? pad_img_c1(i,j-1) : T1+1;
+		int n6 = pad_img_c2(i,j+1) <= s ? pad_img_c1(i,j+1) : T1+1;
+		int n7 = pad_img_c2(i+1,j-1) <= s ? pad_img_c1(i+1,j-1) : T1+1;
+		int n8 = pad_img_c2(i+1,j) <= s ? pad_img_c1(i+1,j) : T1+1;
+		int n9 = pad_img_c2(i+1,j+1) <= s ? pad_img_c1(i+1,j+1) : T1+1;
+
+		int change = 0;
+
+		// square
+		change += 1;
+
+		// edges
+		change -= n2 >= val; // top edge
+		change -= n6 > val; // right edge
+		change -= n8 > val; // bottom edge
+		change -= n4 >= val; // left edge
+		
+		// vertices
+		change += n1 >= val && n2 >= val && n4 >= val; // top-left vertex 
+		change += n2 >= val && n3 >= val && n6 > val; // top-right vertex 
+		change += n4 >= val && n7 > val && n8 > val; // bottom-left vertex 
+		change += n6 > val && n8 > val && n9  > val; // bottom-right vertex 
+
+		for(size_t ind=start; ind < end; ++ind){
+		    ecp(static_cast<int>(val),ind) += change; 
+		}
+	    }
+	}
+    }
+
+    // cummulative sum
+    for(size_t s=0; s<=T2; ++s) {
+	for(size_t r=1; r<=T1; ++r) {
+	    ecp(r,s) += ecp(r-1,s);
+	}
+    }
+
+    return py::array_t<int>(
+	{ecp.dim(0), ecp.dim(1)},
+	ecp.data_ptr()
+    );
+}
+
+py::array_t<int> py_ecp_2d2c_hw_optimized2(py::array_t<int> image_c1, py::array_t<int> image_c2, int T1, int T2) {
+    Matrix<int,2> pad_img_c1 = pad_img_2d(image_c1, T1+1);
+    Matrix<int,2> pad_img_c2 = pad_img_2d(image_c2, T2+1);
+
+    size_t num_rows = image_c2.shape(0);
+    size_t num_cols = image_c2.shape(1); 
+
+    // 1. Allocate with an extra column (T2 + 2) to handle the 'end' marker safely
+    // 2. We use a raw buffer or std::vector to ensure we can hand off ownership to Python
+    std::vector<int> ecp_buffer((T1 + 1) * (T2 + 2), 0);
+    auto get_ecp = [&](int v, int s) -> int& {
+        return ecp_buffer[v * (T2 + 2) + s];
+    };
+
+    for(size_t i=1; i <= num_rows; ++i) {
+        for(size_t j=1; j <= num_cols; ++j) {
+            int s_center = pad_img_c2(i,j);
+            if (s_center > T2) continue;
+
+            int val_c1 = pad_img_c1(i,j);
+            if (val_c1 > T1) continue;
+
+            // Collect unique thresholds in the 3x3 neighborhood
+            int thresholds[10]; 
+            int count = 0;
+            for(int p=-1; p<=1; ++p) {
+                for(int q=-1; q<=1; ++q) {
+                    int s_val = pad_img_c2(i+p, j+q);
+                    // Only care about transitions that happen AFTER or AT the center pixel's start
+                    if(s_val >= s_center && s_val <= T2) {
+                        thresholds[count++] = s_val;
+                    }
+                }
+            }
+            thresholds[count++] = T2 + 1; // The "turn off" event
+
+            std::sort(thresholds, thresholds + count);
+            int* end_ptr = std::unique(thresholds, thresholds + count);
+            int unique_count = static_cast<int>(end_ptr - thresholds);
+
+            int last_change = 0;
+            for(int z=0; z < unique_count - 1; ++z) {
+                int s = thresholds[z];
+
+                auto get_n = [&](int di, int dj) {
+                    // Logic: if neighbor is active at 's', get its c1 value, else T1+1
+                    return (pad_img_c2(i+di, j+dj) <= s) ? pad_img_c1(i+di, j+dj) : T1 + 1;
+                };
+
+                int n1=get_n(-1,-1), n2=get_n(-1,0), n3=get_n(-1,1);
+                int n4=get_n(0,-1),                 n6=get_n(0,1);
+                int n7=get_n(1,-1),  n8=get_n(1,0),  n9=get_n(1,1);
+
+                int change = 1;
+                change -= (n2 >= val_c1) + (n6 > val_c1) + (n8 > val_c1) + (n4 >= val_c1);
+                change += (n1 >= val_c1 && n2 >= val_c1 && n4 >= val_c1);
+                change += (n2 >= val_c1 && n3 >= val_c1 && n6 > val_c1);
+                change += (n4 >= val_c1 && n7 > val_c1 && n8 > val_c1);
+                change += (n6 > val_c1 && n8 > val_c1 && n9 > val_c1);
+
+                // Apply Difference Array logic
+                int delta = change - last_change;
+                get_ecp(val_c1, s) += delta;
+                last_change = change;
+            }
+            // Mark the end of the last interval
+            get_ecp(val_c1, thresholds[unique_count-1]) -= last_change;
+        }
+    }
+
+    // Pass 1: Integrate over S (smears the difference markers)
+    for(int v=0; v <= T1; ++v) {
+        for(int s=1; s <= T2; ++s) {
+            get_ecp(v, s) += get_ecp(v, s - 1);
+        }
+    }
+
+    // Pass 2: Integrate over T1 (Your original cumulative sum)
+    for(int s=0; s <= T2; ++s) {
+        for(int v=1; v <= T1; ++v) {
+            get_ecp(v, s) += get_ecp(v - 1, s);
+        }
+    }
+
+    // Create the result array. 
+    // IMPORTANT: We copy the data into a new py::array_t to avoid ownership issues.
+    py::array_t<int> result({(size_t)T1 + 1, (size_t)T2 + 1});
+    auto r = result.mutable_unchecked<2>();
+    for (int v = 0; v <= T1; ++v) {
+        for (int s = 0; s <= T2; ++s) {
+            r(v, s) = get_ecp(v, s);
+        }
+    }
+
+    return result;
+}
+
+#include <pybind11/pybind11.h>
+#include <pybind11/numpy.h>
+#include <vector>
+#include <algorithm>
+
+namespace py = pybind11;
+
+// Assuming your Matrix class and pad_img_2d are available in the scope.
+// If not, use py::array_t accessors directly.
+
+py::array_t<int> py_ecp_2d3c_hw_optimized(
+    py::array_t<int> image_c1, 
+    py::array_t<int> image_c2, 
+    py::array_t<int> image_c3,
+    int T1, int T2, int T3) 
+{
+    // 1. Padding
+    auto pad_c1 = pad_img_2d(image_c1, T1 + 1);
+    auto pad_c2 = pad_img_2d(image_c2, T2 + 1);
+    auto pad_c3 = pad_img_2d(image_c3, T3 + 1);
+
+    size_t rows = image_c2.shape(0);
+    size_t cols = image_c2.shape(1);
+
+    // 2. Allocate 3D Difference Array
+    // Size is (T1+1) * (T2+2) * (T3+2) to handle "exit" markers safely
+    size_t dim1 = T1 + 1;
+    size_t dim2 = T2 + 2;
+    size_t dim3 = T3 + 2;
+    std::vector<int> ecp_vol(dim1 * dim2 * dim3, 0);
+
+    auto add_diff = [&](int v, int s, int t, int delta) {
+        ecp_vol[(v * dim2 * dim3) + (s * dim3) + t] += delta;
+    };
+
+    // 3. Main Image Pass
+    for (size_t i = 1; i <= rows; ++i) {
+        for (size_t j = 1; j <= cols; ++j) {
+            int v_val = pad_c1(i, j);
+            int s_start = pad_c2(i, j);
+            int t_start = pad_c3(i, j);
+
+            if (v_val > T1 || s_start > T2 || t_start > T3) continue;
+
+            // Collect unique critical thresholds in the 3x3 neighborhood
+            std::vector<int> s_jumps = { s_start, T2 + 1 };
+            std::vector<int> t_jumps = { t_start, T3 + 1 };
+
+            for (int p = -1; p <= 1; ++p) {
+                for (int q = -1; q <= 1; ++q) {
+                    int s_n = pad_c2(i + p, j + q);
+                    int t_n = pad_c3(i + p, j + q);
+                    if (s_n > s_start && s_n <= T2) s_jumps.push_back(s_n);
+                    if (t_n > t_start && t_n <= T3) t_jumps.push_back(t_n);
+                }
+            }
+
+            std::sort(s_jumps.begin(), s_jumps.end());
+            s_jumps.erase(std::unique(s_jumps.begin(), s_jumps.end()), s_jumps.end());
+            
+            std::sort(t_jumps.begin(), t_jumps.end());
+            t_jumps.erase(std::unique(t_jumps.begin(), t_jumps.end()), t_jumps.end());
+
+            // 4. Local Grid Evaluation
+            // We use 2D difference logic on the (S, T) plane for this V level
+            int last_row_change = 0; 
+            for (size_t sz = 0; sz < s_jumps.size() - 1; ++sz) {
+                int s_curr = s_jumps[sz];
+                int s_next = s_jumps[sz + 1];
+                int last_patch_change = 0;
+
+                for (size_t tz = 0; tz < t_jumps.size() - 1; ++tz) {
+                    int t_curr = t_jumps[tz];
+                    int t_next = t_jumps[tz + 1];
+
+                    auto is_active = [&](int di, int dj) {
+                        return pad_c2(i + di, j + dj) <= s_curr && 
+                               pad_c3(i + di, j + dj) <= t_curr;
+                    };
+
+                    auto get_n = [&](int di, int dj) {
+                        return is_active(di, dj) ? pad_c1(i + di, j + dj) : T1 + 1;
+                    };
+
+                    // Standard Euler calculation
+                    int n1=get_n(-1,-1), n2=get_n(-1,0), n3=get_n(-1,1);
+                    int n4=get_n(0,-1),                 n6=get_n(0,1);
+                    int n7=get_n(1,-1),  n8=get_n(1,0),  n9=get_n(1,1);
+
+                    int change = 1;
+                    change -= (n2 >= v_val) + (n6 > v_val) + (n8 > v_val) + (n4 >= v_val);
+                    change += (n1 >= v_val && n2 >= v_val && n4 >= v_val);
+                    change += (n2 >= v_val && n3 >= v_val && n6 > v_val);
+                    change += (n4 >= v_val && n7 > v_val && n8 > v_val);
+                    change += (n6 > v_val && n8 > v_val && n9 > v_val);
+
+                    // Apply 2D Difference markers to the (S, T) slice at this V
+                    int delta = change - last_patch_change;
+                    if (delta != 0) {
+                        add_diff(v_val, s_curr, t_curr, delta);
+                        add_diff(v_val, s_next, t_curr, -delta);
+                    }
+                    last_patch_change = change;
+                }
+                // Close the final T intervals for this S row
+                if (last_patch_change != 0) {
+                    add_diff(v_val, s_curr, T3 + 1, -last_patch_change);
+                    add_diff(v_val, s_next, T3 + 1, last_patch_change);
+                }
+            }
+        }
+    }
+
+    // 5. Triple Integration
+    // Pass 1: Over T
+    for (int v = 0; v <= T1; ++v) {
+        for (int s = 0; s <= T2; ++s) {
+            for (int t = 1; t <= T3; ++t) {
+                ecp_vol[v * dim2 * dim3 + s * dim3 + t] += ecp_vol[v * dim2 * dim3 + s * dim3 + (t - 1)];
+            }
+        }
+    }
+    // Pass 2: Over S
+    for (int v = 0; v <= T1; ++v) {
+        for (int t = 0; t <= T3; ++t) {
+            for (int s = 1; s <= T2; ++s) {
+                ecp_vol[v * dim2 * dim3 + s * dim3 + t] += ecp_vol[v * dim2 * dim3 + (s - 1) * dim3 + t];
+            }
+        }
+    }
+    // Pass 3: Over V (Cumulative over C1)
+    for (int s = 0; s <= T2; ++s) {
+        for (int t = 0; t <= T3; ++t) {
+            for (int v = 1; v <= T1; ++v) {
+                ecp_vol[v * dim2 * dim3 + s * dim3 + t] += ecp_vol[(v - 1) * dim2 * dim3 + s * dim3 + t];
+            }
+        }
+    }
+
+    // 6. Return as 3D NumPy Array
+    py::array_t<int> result({ (size_t)T1 + 1, (size_t)T2 + 1, (size_t)T3 + 1 });
+    auto r = result.mutable_unchecked<3>();
+    for (int v = 0; v <= T1; ++v) {
+        for (int s = 0; s <= T2; ++s) {
+            for (int t = 0; t <= T3; ++t) {
+                r(v, s, t) = ecp_vol[v * dim2 * dim3 + s * dim3 + t];
+            }
+        }
+    }
+
+    return result;
+}
+
 PYBIND11_MODULE(euprima, m) {
     m.def("ec_binary_image_2d_naive", &py_ec_binary_image_2d_naive, "Euler characteristic of a binary 2d image without and optimizations");
     m.def("char_binary_image_2d", &char_binary_image_2d, "Euler characteristic of a binary 2d image without and optimizations");
@@ -974,4 +1302,7 @@ PYBIND11_MODULE(euprima, m) {
     m.def("ecp_2d3c_naive", &py_ecp_2d3c_naive, "Euler characteristic profile computed without any optimizations");
     m.def("ecp_2d3c", &py_ecp_2d3c, "Euler characteristic profile computed with the most efficient algorithm yet");
     m.def("ecp_2d2c_hw", &py_ecp_2d2c_hw, "Euler characteristic profile computed the efficient Heiss/Wagner algorithm for ECCs");
+    m.def("ecp_2d2c_hw_optimized", &py_ecp_2d2c_hw_optimized, "Euler characteristic profile computed the efficient Heiss/Wagner algorithm for ECCs");
+    m.def("ecp_2d2c_hw_optimized2", &py_ecp_2d2c_hw_optimized2, "Euler characteristic profile computed the efficient Heiss/Wagner algorithm for ECCs");
+    m.def("ecp_2d3c_hw_optimized", &py_ecp_2d3c_hw_optimized, "Euler characteristic profile computed the efficient Heiss/Wagner algorithm for ECCs");
 }

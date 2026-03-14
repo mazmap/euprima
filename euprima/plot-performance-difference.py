@@ -13,8 +13,8 @@ def plot_absolute_difference(csv_filename):
 
     # 2. Calculate the absolute difference between the first two columns
     # Formula: |Column1 - Column2|
-    col1 = df.iloc[:, 0]
-    col2 = df.iloc[:, 1]
+    col1 = df.iloc[:, 1]
+    col2 = df.iloc[:, 2]
     minimum = np.minimum(col1,col2)
     df['diff'] = (col1 - col2).abs()/minimum
 
@@ -41,11 +41,11 @@ def plot_absolute_difference(csv_filename):
     plt.grid(True, linestyle='--', alpha=0.6)
     
     # 4. Save and show the plot
-    plt.savefig('improvement_binary_ec.pdf')
+    plt.savefig('improvement_optimized_hw.pdf')
     print("Plot has been saved as 'improvement_binary_ec.pdf'")
 
 # Replace 'your_file.csv' with the actual name of your CSV file
 if __name__ == "__main__":
     # Example usage:
-    plot_absolute_difference('benchmark_binary_ec.csv')
+    plot_absolute_difference('benchmark_ecp_2d2c.csv')
     pass

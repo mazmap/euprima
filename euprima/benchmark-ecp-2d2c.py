@@ -20,7 +20,7 @@ def input_generator(n):
         for _ in range(samples_per_n+1)
     ]
 
-N = 50
+N = 100
 ig_args = range(1,N+1)
 
 summary1 = testing_utils.benchmark(euprima.ecp_2d2c, input_generator, ig_args)
@@ -34,7 +34,7 @@ def input_generator2(n):
          255)
         for _ in range(samples_per_n+1)
     ] 
-summary3 = testing_utils.benchmark(euprima.ecp_2d2c_hw, input_generator2, ig_args)
+summary3 = testing_utils.benchmark(euprima.ecp_2d2c_hw_optimized, input_generator2, ig_args)
 #summary4 = testing_utils.benchmark(euprima.ecp_2d2c_naive, input_generator2, ig_args)
 
 # TODO: Save summaries to csv
@@ -47,7 +47,7 @@ data = {
 
 # Convert to DataFrame and save
 df = pd.DataFrame(data)
-df.to_csv('benchmark_ecp_2d2c.csv', index=False)
+df.to_csv('benchmark_ecp_2d2c_2.csv', index=False)
 
 plt.figure(figsize=(10, 6))
 plt.plot(ig_args, [t*1000 for t in summary1], label='ecp_2d2c [euprima]', marker='o', markersize=2)
@@ -63,5 +63,5 @@ plt.grid(True, linestyle='--', alpha=0.7)
 plt.tight_layout()
 
 # Save the plot
-plt.savefig('benchmark_ecp_2d2c.png')
+plt.savefig('benchmark_ecp_2d2c_2.png')
 print("Benchmark complete. Data saved to CSV and graph saved as PNG.")
