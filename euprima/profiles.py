@@ -39,20 +39,23 @@ ecp = euprima.ecp_2d2c(img_c1, img_c2, euler_changes, T, T);
 ecp_euchar = euchar.surface.images_2D(img_c1, img_c2, euler_changes, T, T);
 ecp_naive = euprima.ecp_2d2c_naive(img_c1, img_c2, T, T);
 ecp_hw = euprima.ecp_2d2c_hw_optimized2(img_c1, img_c2, T, T);
+ecp_optimized = euprima.ecp_2d2c_optimized(img_c1,img_c2, euler_changes, T,T);
 
 
 print("ECP_2d2c")
-testing_utils.check_pairwise_equality([ecp,ecp_euchar,ecp_hw,ecp_naive], labels=["euprima","euchar","heiss/wagner","euprima_naive"])
+testing_utils.check_pairwise_equality([ecp,ecp_optimized,ecp_euchar,ecp_hw,ecp_naive], labels=["euprima","euprima (o)", "euchar","heiss/wagner","euprima_naive"])
 
 print("Euler changes")
 testing_utils.check_pairwise_equality([euler_changes, euler_changes_euprima], labels=["euchar", "euprima"])
 
 ecp3_naive = euprima.ecp_2d3c_naive(img_c1, img_c2, img_c3, T, T, T)
 ecp3 = euprima.ecp_2d3c(img_c1, img_c2, img_c3, euler_changes, T, T, T)
+ecp3_o = euprima.ecp_2d3c_optimized(img_c1, img_c2, img_c3, euler_changes, T, T, T)
 ecp3_hw = euprima.ecp_2d3c_hw_optimized(img_c1, img_c2, img_c3, T, T, T)
+ecp3_hw_test = euprima.ecp_2d3c_hw_optimized_test(img_c1, img_c2, img_c3, T, T, T)
 
 print("ECP_2d3c")
-testing_utils.check_pairwise_equality([ecp3, ecp3_hw, ecp3_naive], labels=["ecp3","ecp3_hw", "ecp3_naive"])
+testing_utils.check_pairwise_equality([ecp3, ecp3_o, ecp3_hw, ecp3_hw_test, ecp3_naive], labels=["ecp3","ecp3_o","ecp3_hw", "ecp3_hw_test", "ecp3_naive"])
 
 #print(ecp3_naive)
 #print(ecp3)

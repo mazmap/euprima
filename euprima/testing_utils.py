@@ -45,7 +45,10 @@ def benchmark(function, input_generator, ig_args, display_progress_bar=True):
 
         t_start = time.perf_counter()
         for input in inputs:
-            function(*input)
+            if isinstance(input, tuple): 
+                function(*input)
+            else: 
+                 function(input)
         t_end = time.perf_counter()
         t_avg = (t_end - t_start) / len(inputs)
         summary.append(t_avg)

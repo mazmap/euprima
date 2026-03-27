@@ -37,7 +37,7 @@ plt.plot(ig_args, [t*1000 for t in summary2], label='char_binary_image_2d [eucha
 plt.plot(ig_args, [t*1000 for t in summary3], label='ec_binary_image_2d_gray [euprima]', marker='o', markersize=2)
 
 plt.xlabel('Matrix Dimension (N x N)')
-plt.ylabel('Avg Execution Time (Microseconds)')
+plt.ylabel('Avg Execution Time (ms)')
 plt.title('euprima vs. euchar')
 plt.legend()
 plt.grid(True, linestyle='--', alpha=0.7)
