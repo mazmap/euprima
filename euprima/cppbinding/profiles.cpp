@@ -2445,6 +2445,248 @@ py::array_t<int> py_ecp_2d3c_hl_contributions(py::array_t<int> contributions, in
     return result;
 }
 
+int pwr_sgn(int n) {
+    return 1 - 2*(1 & n); 
+}
+
+// only every called for vertices => dim = 1 => dim + |A| - 1 = |A|
+void place_markers(Matrix<int,3> &ecp, std::initializer_list<int> channel1, std::initializer_list<int> channel2, std::initializer_list<int> channel3, size_t dim) {
+    size_t set_size = channel1.size();
+    size_t num_subsets = 1 << set_size;
+
+    for(size_t mask=1; mask<num_subsets; ++mask) {
+	int current_max_c1 = std::numeric_limits<int>::min();
+	int current_max_c2 = std::numeric_limits<int>::min();
+	int current_max_c3 = std::numeric_limits<int>::min();
+
+	for(size_t j=0; j<set_size; ++j) {
+	    if(mask & (1 << j)) {
+		current_max_c1 = std::max(current_max_c1, *std::next(channel1.begin(), j));
+		current_max_c2 = std::max(current_max_c2, *std::next(channel2.begin(), j));
+		current_max_c3 = std::max(current_max_c3, *std::next(channel3.begin(), j));
+	    }
+	}
+
+	int subset_size = __builtin_popcountll(mask);
+
+	ecp(current_max_c1, current_max_c2, current_max_c3) += pwr_sgn(dim + subset_size - 1);
+    }
+}
+
+py::array_t<int> py_ecp_2d3c_hl_mc(
+	py::array_t<int> image_c1,
+	py::array_t<int> image_c2,
+	py::array_t<int> image_c3,
+	int T1, int T2, int T3)
+{
+    auto img_c1 = image_c1.unchecked<2>();
+    auto img_c2 = image_c2.unchecked<2>();
+    auto img_c3 = image_c3.unchecked<2>();
+
+    size_t num_rows = img_c1.shape(0);
+    size_t num_cols = img_c2.shape(1);
+ 
+    Matrix<int,3> ecp(T1+1,T2+1,T3+1,0);
+
+    // inner pixels
+    for(size_t i=1; i<num_rows-1; ++i) {
+	for(size_t j=1; j<num_cols-1; ++j) {
+	    // top-right vertex
+	    place_markers(
+		ecp, 
+		{img_c1(i,j), img_c1(i-1,j), img_c1(i-1,j+1), img_c1(i,j+1)},
+		{img_c2(i,j), img_c2(i-1,j), img_c2(i-1,j+1), img_c2(i,j+1)},
+		{img_c3(i,j), img_c3(i-1,j), img_c3(i-1,j+1), img_c3(i,j+1)},
+		0
+	    );
+
+	    // top edge
+	    place_markers(
+		ecp,
+		{img_c1(i,j), img_c1(i-1,j)},
+		{img_c2(i,j), img_c2(i-1,j)},
+		{img_c3(i,j), img_c3(i-1,j)},
+		1
+	    );
+
+	    // right edge{
+	    place_markers(
+		ecp,
+		{img_c1(i,j), img_c1(i,j+1)},
+		{img_c2(i,j), img_c2(i,j+1)},
+		{img_c3(i,j), img_c3(i,j+1)},
+		1
+	    );
+
+	    // square
+	    ecp(img_c1(i,j), img_c2(i,j), img_c3(i,j)) += 1;
+	}
+    }
+
+    // top pixels
+    // for(size_t j=1; j<num_cols-1; ++j) {
+	// top-right vertex - is canceled by the right edge
+	// ecp(std::min(img_c1(0,j), img_c1(0,j+1)), 
+	//     std::min(img_c2(0,j), img_c2(0,j+1)),
+	//     std::min(img_c3(0,j), img_c3(0,j+1))) += 1;
+	
+	// top edge - is canceled by the square
+	// ecp(img_c1(0,j), img_c2(0,j), img_c3(0,j)) += -1;
+	
+	// right edge - is canceled by the top-right vertex
+	// ecp(std::min(img_c1(0,j), img_c1(0,j+1)),
+	//     std::min(img_c1(0,j), img_c1(0,j+1)),
+	//     std::min(img_c1(0,j), img_c1(0,j+1))) += -1;
+	
+	// square - is canceled by the top edge
+	// ecp(img_c1(0,j), img_c2(0,j), img_c3(0,j)) += 1;
+    // }
+
+    // right pixels
+    // for(size_t i=1; i<num_rows-1; ++i) {
+	// top-right vertex - is canceled by the top edge
+	// top edge - is canceled by the top-right vertex
+	// right edge - is canceled by the square
+	// square - is canceled by the right edge
+    // }
+    
+    // bottom pixels
+    for(size_t j=1; j<num_cols-1; ++j) {
+	// top-right vertex
+	place_markers(
+	    ecp,
+	    {img_c1(num_rows-1,j), img_c1(num_rows-2,j), img_c1(num_rows-2,j+1), img_c1(num_rows-1,j+1)},
+	    {img_c2(num_rows-1,j), img_c2(num_rows-2,j), img_c2(num_rows-2,j+1), img_c2(num_rows-1,j+1)},
+	    {img_c3(num_rows-1,j), img_c3(num_rows-2,j), img_c3(num_rows-2,j+1), img_c3(num_rows-1,j+1)},
+	    0
+	);
+
+	// bottom-right vertex - is canceled by the right edge
+
+	// top edge
+	place_markers(
+	    ecp,
+	    {img_c1(num_rows-1,j), img_c1(num_rows-2,j)},
+	    {img_c2(num_rows-1,j), img_c2(num_rows-2,j)},
+	    {img_c3(num_rows-1,j), img_c3(num_rows-2,j)},
+	    1
+	);
+
+	
+	// right edge - is canceled by the bottom-right vertex
+	// bottom edge - is canceled by the square
+	// square - is canceled by the bottom edge
+    }
+    
+    // left pixels
+    for(size_t i=1; i<num_rows-1; ++i) {
+	// top-right vertex
+	place_markers(
+	    ecp,
+	    {img_c1(i,0), img_c1(i-1,0), img_c1(i-1,1), img_c1(i,1)},
+	    {img_c2(i,0), img_c2(i-1,0), img_c2(i-1,1), img_c2(i,1)},
+	    {img_c3(i,0), img_c3(i-1,0), img_c3(i-1,1), img_c3(i,1)},
+	    0
+	);
+	
+	// top-left vertex - is canceled by the top edge
+	
+	// top edge - is canceled by the top-left vertex
+	
+	// right edge
+	place_markers(
+	    ecp,
+	    {img_c1(i,0), img_c1(i,1)},
+	    {img_c2(i,0), img_c2(i,1)},
+	    {img_c3(i,0), img_c3(i,1)},
+	    1
+	);
+	
+	// left edge - is canceled by the square
+	
+	// square - is canceled by the left edge
+    }
+    
+    // top-left pixel
+    // top-right vertex - is canceled by the right edge
+    // top-left vertex - is canceled by the top edge
+    // top edge - is canceled by the top-left vertex
+    // right edge - is canceled by the top-right vertex
+    // left edge - is canceled by the square
+    // square - is canceled by the left edge
+    
+    // top-right pixel
+    // top-right vertex - is canceled by the top edge
+    // top edge - is canceled by the top-right vertex
+    // right edge - is canceled by the square
+    // square - is canceled by the right edge
+    
+    // bottom-right pixel
+    // top-right vertex - is canceled by the top edge
+    // bottom-right vertex - is canceled by the right edge
+    //
+    // top edge - is canceled by the top-right vertex
+    // right edge - is canceled by the bottom-right vertex
+    // bottom edge - is canceled by the square
+    //
+    // square - is canceled by the bottom edge
+
+    // bottom-left pixel
+    // top-right vertex 
+    place_markers(
+	ecp,
+	{img_c1(num_rows-1,0), img_c1(num_rows-2,0), img_c1(num_rows-2,1), img_c1(num_rows-1,1)},
+	{img_c2(num_rows-1,0), img_c2(num_rows-2,0), img_c2(num_rows-2,1), img_c2(num_rows-1,1)},
+	{img_c3(num_rows-1,0), img_c3(num_rows-2,0), img_c3(num_rows-2,1), img_c3(num_rows-1,1)},
+	0
+    );
+    // top-left vertex - is canceled by the top edge
+    // bottom-right vertex - is canceled by the right edge
+    // bottom-left vertex - is canceled by the left edge
+    //
+    // top edge - is canceled by the top-left vertex
+    // right edge - is canceled by the bottom-right vertex
+    // bottom edge - is canceled by the square
+    // left edge - is canceled by the bottom-left vertex
+    //
+    // square - is canceled by the bottom edge
+    
+    for (int r = 0; r <= T1; ++r) {
+        for (int s = 0; s <= T2; ++s) {
+            for (int t = 1; t <= T3; ++t) {
+                ecp(r,s,t) += ecp(r,s,t-1);
+            }
+        }
+    }
+    for (int r = 0; r <= T1; ++r) {
+	for(int s =1; s <= T2; ++s) {
+	    for (int t = 0; t <= T3; ++t) {
+		ecp(r,s,t) += ecp(r,s-1,t);
+	    }
+	}
+    }
+
+    for(size_t r=1; r<T1+1; ++r){
+	for(size_t s=0; s<T2+1; ++s) {
+	    for(size_t t=0; t<T3+1; ++t) {
+		ecp(r,s,t) += ecp(r-1,s,t);
+	    }
+	}
+    }
+
+    py::array_t<int> result({ (size_t)T1 + 1, (size_t)T2 + 1, (size_t)T3 + 1 });
+    auto r = result.mutable_unchecked<3>();
+    for (int v = 0; v <= T1; ++v) {
+        for (int s = 0; s <= T2; ++s) {
+            for (int t = 0; t <= T3; ++t) {
+                r(v, s, t) = ecp(v,s,t);
+            }
+        }
+    }
+
+    return result;
+}
+
 PYBIND11_MODULE(euprima, m) {
     m.def("ec_binary_image_2d_naive", &py_ec_binary_image_2d_naive, "Euler characteristic of a binary 2d image without and optimizations");
     m.def("char_binary_image_2d", &char_binary_image_2d, "Euler characteristic of a binary 2d image without and optimizations");
@@ -2471,6 +2713,7 @@ PYBIND11_MODULE(euprima, m) {
     m.def("ecp_2d2c_optimized", &py_ecp_2d2c_optimized, "Euler characteristic profile computed the efficient Heiss/Wagner algorithm for ECCs");
 
     m.def("ecp_2d3c_hl", &py_ecp_2d3c_hl, "Euler characteristic profile for the top-cell filtration by Hacquard/Lebovici");
+    m.def("ecp_2d3c_hl_mc", &py_ecp_2d3c_hl_mc, "Euler characteristic profile for the filtration induced by top-cell by Hacquard/Lebovici");
     m.def("ecp_2d3c_hl_contributions", &py_ecp_2d3c_hl_contributions, "Euler characteristic profile for the top-cell filtration by Hacquard/Lebovici");
 
     m.def("compute_contributions", &compute_contributions, "Dlotko/Gurnari contributions / vectorized cubical complex for eulearning");

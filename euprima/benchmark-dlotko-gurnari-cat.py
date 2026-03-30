@@ -67,7 +67,7 @@ def compute_RGB_contributions(image, inf_value=np.inf):
     return list(contributions.items())
     #return sorted(list(contributions.items()), key=lambda x: x[0])[:-1]
 
-cat_img = Image.open("tigger.jpg").convert("RGB")
+cat_img = Image.open("ship.jpg").convert("RGB")
 
 # t_start = time.perf_counter()
 # contributions = compute_RGB_contributions(cat_img_np) # contains tuples of the form ((r,g,b), ec)
@@ -88,7 +88,7 @@ t_start = time.perf_counter()
 euprima.ecp_2d3c_hw_optimized(cat_img_c1, cat_img_c2, cat_img_c3, 255, 255, 255)
 t_end = time.perf_counter()
 t_dur = t_end - t_start
-print("HW:", t_dur)
+print("HEWA3:", t_dur)
 
 # rand_img_c1 = np.random.randint(0,256,(width,height))
 # rand_img_c2 = np.random.randint(0,256,(width,height))
@@ -101,7 +101,14 @@ print("HW:", t_dur)
 # print("random:", t_dur)
 
 t_start = time.perf_counter()
+euler_changes = euprima.euler_changes_2d()
+euprima.ecp_2d3c_optimized(cat_img_c1, cat_img_c2, cat_img_c3, euler_changes, 255, 255, 255)
+t_end = time.perf_counter()
+t_dur = t_end - t_start
+print("BELT3:", t_dur)
+
+t_start = time.perf_counter()
 euprima.ecp_2d3c_hl(cat_img_c1, cat_img_c2, cat_img_c3, 255, 255, 255)
 t_end = time.perf_counter()
 t_dur = t_end - t_start
-print("HL:", t_dur)
+print("HALE3t:", t_dur)

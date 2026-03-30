@@ -7,7 +7,7 @@ import testing_utils
 import build.euprima as euprima
 
 T = 255
-N = 10000
+N = 5000
 STEPS = 500
 START = 500
 SAMPLES_PER_N = 1
@@ -25,25 +25,28 @@ ig_args = range(START,N+1,STEPS)
 
 summary1 = testing_utils.benchmark(euprima.ecp_2d3c_hl, input_generator, ig_args)
 summary2 = testing_utils.benchmark(euprima.ecp_2d3c_hw_optimized, input_generator, ig_args)
+summary3 = testing_utils.benchmark(euprima.ecp_2d3c_hl_mc, input_generator, ig_args)
 
 # TODO: Save summaries to csv
 data = {
     "ecp_2d3c_hl": summary1,
     "ecp_2d3c_hw": summary2,
+    "ecp_2d3c_hl_mc": summary3,
 }
 
-filename = "benchmark_hl_top_cell"
+filename = "benchmark_hl"
 
 # Convert to DataFrame and save
 df = pd.DataFrame(data)
 df.to_csv(filename+".csv", index=False)
 
 plt.figure(figsize=(10, 6))
-plt.plot(ig_args, [t*1000 for t in summary1], label='ecp_2d3c_hl [euprima]', marker='o', markersize=2)
-plt.plot(ig_args, [t*1000 for t in summary2], label='ecp_2d3c_hw [euprima]', marker='o', markersize=2)
+plt.plot(ig_args, [t for t in summary1], label='ecp_2d3c_hl [euprima]', marker='o', markersize=2)
+plt.plot(ig_args, [t for t in summary2], label='ecp_2d3c_hw [euprima]', marker='o', markersize=2)
+plt.plot(ig_args, [t for t in summary3], label='ecp_2d3c_hl_mc [euprima]', marker='o', markersize=2)
 
-plt.xlabel('Image Dimension N')
-plt.ylabel('Avg Execution Time (ms)')
+plt.xlabel('Image Dimension N (N x N)')
+plt.ylabel('Avg Execution Time (s)')
 plt.title(f"$T_1 = T_2 = T_3 = {T}$")
 plt.legend()
 plt.grid(True, linestyle='--', alpha=0.7)

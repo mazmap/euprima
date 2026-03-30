@@ -53,9 +53,10 @@ ecp3 = euprima.ecp_2d3c(img_c1, img_c2, img_c3, euler_changes, T, T, T)
 ecp3_o = euprima.ecp_2d3c_optimized(img_c1, img_c2, img_c3, euler_changes, T, T, T)
 ecp3_hw = euprima.ecp_2d3c_hw_optimized(img_c1, img_c2, img_c3, T, T, T)
 ecp3_hw_test = euprima.ecp_2d3c_hw_optimized_test(img_c1, img_c2, img_c3, T, T, T)
+ecp3_hl_mc = euprima.ecp_2d3c_hl_mc(img_c1, img_c2, img_c3, T, T, T)
 
 print("ECP_2d3c")
-testing_utils.check_pairwise_equality([ecp3, ecp3_o, ecp3_hw, ecp3_hw_test, ecp3_naive], labels=["ecp3","ecp3_o","ecp3_hw", "ecp3_hw_test", "ecp3_naive"])
+testing_utils.check_pairwise_equality([ecp3_naive, ecp3, ecp3_o, ecp3_hw, ecp3_hw_test, ecp3_hl_mc], labels=["ecp3_naive", "ecp3","ecp3_o","ecp3_hw", "ecp3_hw_test", "ecp3_hl_mc"])
 
 #print(ecp3_naive)
 #print(ecp3)
