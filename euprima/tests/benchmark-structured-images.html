@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Transposed Algorithm Benchmark</title>
+    <style>
+        body { font-family: system-ui, -apple-system, sans-serif; margin: 40px; background: #f9f9f9; }
+        .table-container { overflow-x: auto; max-width: 100%; background: white; }
+        table { border-collapse: collapse; width: max-content; min-width: 100%; }
+        th, td { border: 1px solid #ddd; padding: 16px; text-align: center; vertical-align: middle; }
+        th { background-color: #f2f2f2; font-weight: 600; color: #333; text-align: right; position: sticky; left: 0; z-index: 1;}
+        /* Add a right border to the sticky header to separate it from scrolling content */
+        th::after { content: ''; position: absolute; top: 0; right: 0; bottom: 0; border-right: 2px solid #ccc; }
+        .img-preview { width: 150px; height: auto; object-fit: contain; background: #fff; }
+        .filename { font-size: 0.9em; font-weight: bold; color: #444; margin: 8px auto 0; max-width: 150px; word-wrap: break-word; text-align: center; }
+        .dimensions { font-size: 0.85em; color: #666; }
+    </style>
+</head>
+<body>
+    <h2>Structured Images Benchmark</h2>
+    <div class="table-container">
+        <table>
+            <tbody>
+                <tr>
+                    <th>Preview</th>
+                    <td>
+                        <img class="img-preview" src="test-images/tigger.jpg" alt="test-images/tigger.jpg">
+                        <div class="filename">test-images/tigger.jpg</div>
+                    </td>
+                    <td>
+                        <img class="img-preview" src="test-images/ship.jpg" alt="test-images/ship.jpg">
+                        <div class="filename">test-images/ship.jpg</div>
+                    </td>
+                    <td>
+                        <img class="img-preview" src="test-images/bird.jpg" alt="test-images/bird.jpg">
+                        <div class="filename">test-images/bird.jpg</div>
+                    </td>
+                    <td>
+                        <img class="img-preview" src="test-images/mountains.jpg" alt="test-images/mountains.jpg">
+                        <div class="filename">test-images/mountains.jpg</div>
+                    </td>
+                    <td>
+                        <img class="img-preview" src="test-images/night-sky-lines.jpg" alt="test-images/night-sky-lines.jpg">
+                        <div class="filename">test-images/night-sky-lines.jpg</div>
+                    </td>
+                    <td>
+                        <img class="img-preview" src="test-images/minarett.jpg" alt="test-images/minarett.jpg">
+                        <div class="filename">test-images/minarett.jpg</div>
+                    </td>
+                    <td>
+                        <img class="img-preview" src="test-images/mountains-silhouette.jpg" alt="test-images/mountains-silhouette.jpg">
+                        <div class="filename">test-images/mountains-silhouette.jpg</div>
+                    </td>
+                    <td>
+                        <img class="img-preview" src="test-images/desert.jpg" alt="test-images/desert.jpg">
+                        <div class="filename">test-images/desert.jpg</div>
+                    </td>
+                    <td>
+                        <img class="img-preview" src="test-images/white-flower-red-background.jpg" alt="test-images/white-flower-red-background.jpg">
+                        <div class="filename">test-images/white-flower-red-background.jpg</div>
+                    </td>
+                </tr>
+                <tr>
+                    <th>Dimensions</th>
+                    <td>
+                        <strong>3024 &times; 4032</strong><br>
+                        <span class="dimensions">(12192768 px)</span>
+                    </td>
+                    <td>
+                        <strong>3888 &times; 5184</strong><br>
+                        <span class="dimensions">(20155392 px)</span>
+                    </td>
+                    <td>
+                        <strong>5027 &times; 4022</strong><br>
+                        <span class="dimensions">(20218594 px)</span>
+                    </td>
+                    <td>
+                        <strong>4000 &times; 2667</strong><br>
+                        <span class="dimensions">(10668000 px)</span>
+                    </td>
+                    <td>
+                        <strong>6000 &times; 4000</strong><br>
+                        <span class="dimensions">(24000000 px)</span>
+                    </td>
+                    <td>
+                        <strong>3826 &times; 5739</strong><br>
+                        <span class="dimensions">(21957414 px)</span>
+                    </td>
+                    <td>
+                        <strong>5424 &times; 8136</strong><br>
+                        <span class="dimensions">(44129664 px)</span>
+                    </td>
+                    <td>
+                        <strong>4160 &times; 6240</strong><br>
+                        <span class="dimensions">(25958400 px)</span>
+                    </td>
+                    <td>
+                        <strong>3739 &times; 5609</strong><br>
+                        <span class="dimensions">(20972051 px)</span>
+                    </td>
+                </tr>
+                <tr>
+                    <th>HEWA3 (s)</th>
+                    <td>52</td>
+                    <td>39</td>
+                    <td>61</td>
+                    <td>41</td>
+                    <td>90</td>
+                    <td>62</td>
+                    <td>76</td>
+                    <td>59</td>
+                    <td>71</td>
+                </tr>
+                <tr>
+                    <th>BELT3 (s)</th>
+                    <td>60</td>
+                    <td>48</td>
+                    <td>73</td>
+                    <td>49</td>
+                    <td>103</td>
+                    <td>74</td>
+                    <td>97</td>
+                    <td>74</td>
+                    <td>82</td>
+                </tr>
+                <tr>
+                    <th>HALE3t (s)</th>
+                    <td>5</td>
+                    <td>7</td>
+                    <td>8</td>
+                    <td>4</td>
+                    <td>9</td>
+                    <td>8</td>
+                    <td>15</td>
+                    <td>9</td>
+                    <td>8</td>
+                </tr>
+                <tr>
+                    <th>HALE3i (s)</th>
+                    <td>19</td>
+                    <td>29</td>
+                    <td>31</td>
+                    <td>16</td>
+                    <td>38</td>
+                    <td>33</td>
+                    <td>64</td>
+                    <td>38</td>
+                    <td>32</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

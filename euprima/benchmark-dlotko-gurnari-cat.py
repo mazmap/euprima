@@ -67,7 +67,7 @@ def compute_RGB_contributions(image, inf_value=np.inf):
     return list(contributions.items())
     #return sorted(list(contributions.items()), key=lambda x: x[0])[:-1]
 
-cat_img = Image.open("ship.jpg").convert("RGB")
+cat_img = Image.open("tests/test-images/ship.jpg").convert("RGB")
 
 # t_start = time.perf_counter()
 # contributions = compute_RGB_contributions(cat_img_np) # contains tuples of the form ((r,g,b), ec)
@@ -77,6 +77,7 @@ cat_img = Image.open("ship.jpg").convert("RGB")
 #print(contributions)
 
 cat_img_np = np.array(cat_img)
+print(cat_img_np.shape)
 cat_img_c1 = cat_img_np[:,:,0]
 cat_img_c2 = cat_img_np[:,:,1]
 cat_img_c3 = cat_img_np[:,:,2]

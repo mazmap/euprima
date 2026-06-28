@@ -1,6 +1,6 @@
 import numpy as np
 import build.euprima as euprima
-import euchar.utils, euchar.surface
+# import euchar.utils, euchar.surface
 from tabulate import tabulate
 import testing_utils
 
@@ -24,39 +24,52 @@ import testing_utils
 #print(ec_yao);
 
 T = 10
-N = 10
+N = 3
 
-img_c1 = np.random.randint(0, T+1, (N,N), dtype=np.uint8)
-img_c2 = np.random.randint(0, T+1, (N,N), dtype=np.uint8)
-img_c3 = np.random.randint(0, T+1, (N,N), dtype=np.uint8)
+img_c1 = np.random.randint(0, T+1, (N,N), dtype=np.int32)
+img_c2 = np.random.randint(0, T+1, (N,N), dtype=np.int32)
+img_c3 = np.random.randint(0, T+1, (N,N), dtype=np.int32)
 
-print(img_c1);
+euler_changes = euprima.belt_2d_euler_changes();
 
-euler_changes = euchar.utils.vector_all_euler_changes_in_2D_images()
-euler_changes_euprima = euprima.euler_changes_2d();
+ecp_naive = euprima.ecp_ind_2d3c_naive(img_c1, img_c2, img_c3, T, T, T)
+ecp_belt = euprima.ecp_belt_2d3c(img_c1, img_c2, img_c3, euler_changes, T, T, T)
+ecp_hewa = euprima.ecp_hewa_2d3c(img_c1, img_c2, img_c3, T, T, T)
+ecp_hale_i = euprima.ecp_hale_i_2d3c(img_c1, img_c2, img_c3, T, T, T)
 
-ecp = euprima.ecp_2d2c(img_c1, img_c2, euler_changes, T, T);
-ecp_euchar = euchar.surface.images_2D(img_c1, img_c2, euler_changes, T, T);
-ecp_naive = euprima.ecp_2d2c_naive(img_c1, img_c2, T, T);
-ecp_hw = euprima.ecp_2d2c_hw_optimized2(img_c1, img_c2, T, T);
-ecp_optimized = euprima.ecp_2d2c_optimized(img_c1,img_c2, euler_changes, T,T);
+print("ECP of the filtration induced by top-cells of 2-dimensional 3-channel images")
+testing_utils.check_pairwise_equality([ecp_naive, ecp_belt, ecp_hewa, ecp_hale_i], labels=["Naive", "BELT(2,3)", "HEWA(2,3)", "HALE:I(2,3)"])
+
+print("ECP of the top-cell filtration of 2-dimensional 3-channel images")
+# Example from Figure 2.4
+img1_c1 = np.array([[1,2]], dtype=np.int32)
+img1_c2 = np.array([[2,1]], dtype=np.int32)
+img1_c3 = np.array([[0,0]], dtype=np.int32)
+# Example from Figure 2.5
+img2_c1 = np.array([[2,2,1], [2,2,2], [1,2,2]])
+img2_c2 = np.array([[2,2,2], [2,2,1], [1,2,2]])
+img2_c3 = np.array([[0,0,0], [0,0,0], [0,0,0]])
+
+ecp_hale_t_img1 = euprima.ecp_hale_t_2d3c(img1_c1, img1_c2, img1_c3, 2, 2, 2)
+ecp_hale_i_img1 = euprima.ecp_hale_i_2d3c(img1_c1, img1_c2, img1_c3, 2, 2, 2)
+ecp_naive_img1 = euprima.ecp_ind_2d3c_naive(img1_c1, img1_c2, img1_c3, 2, 2, 2)
+ecp_hale_v_img1 = euprima.ecp_ind_2d3c_naive(img2_c1, img2_c2, img2_c3, 2, 2, 2)
+
+print(ecp_hale_t_img1[0][0][0], ecp_hale_t_img1[0][1][0], ecp_hale_t_img1[0][2][0])
+print(ecp_hale_t_img1[1][0][0], ecp_hale_t_img1[1][1][0], ecp_hale_t_img1[1][2][0])
+print(ecp_hale_t_img1[2][0][0], ecp_hale_t_img1[2][1][0], ecp_hale_t_img1[2][2][0])
+print()
+print(ecp_hale_i_img1[0][0][0], ecp_hale_i_img1[0][1][0], ecp_hale_i_img1[0][2][0])
+print(ecp_hale_i_img1[1][0][0], ecp_hale_i_img1[1][1][0], ecp_hale_i_img1[1][2][0])
+print(ecp_hale_i_img1[2][0][0], ecp_hale_i_img1[2][1][0], ecp_hale_i_img1[2][2][0])
+print()
+print(ecp_naive_img1[0][0][0], ecp_naive_img1[0][1][0], ecp_naive_img1[0][2][0])
+print(ecp_naive_img1[1][0][0], ecp_naive_img1[1][1][0], ecp_naive_img1[1][2][0])
+print(ecp_naive_img1[2][0][0], ecp_naive_img1[2][1][0], ecp_naive_img1[2][2][0])
+print()
+print(ecp_hale_v_img1[0][0][0], ecp_hale_v_img1[0][1][0], ecp_hale_v_img1[0][2][0])
+print(ecp_hale_v_img1[1][0][0], ecp_hale_v_img1[1][1][0], ecp_hale_v_img1[1][2][0])
+print(ecp_hale_v_img1[2][0][0], ecp_hale_v_img1[2][1][0], ecp_hale_v_img1[2][2][0])
 
 
-print("ECP_2d2c")
-testing_utils.check_pairwise_equality([ecp,ecp_optimized,ecp_euchar,ecp_hw,ecp_naive], labels=["euprima","euprima (o)", "euchar","heiss/wagner","euprima_naive"])
-
-print("Euler changes")
-testing_utils.check_pairwise_equality([euler_changes, euler_changes_euprima], labels=["euchar", "euprima"])
-
-ecp3_naive = euprima.ecp_2d3c_naive(img_c1, img_c2, img_c3, T, T, T)
-ecp3 = euprima.ecp_2d3c(img_c1, img_c2, img_c3, euler_changes, T, T, T)
-ecp3_o = euprima.ecp_2d3c_optimized(img_c1, img_c2, img_c3, euler_changes, T, T, T)
-ecp3_hw = euprima.ecp_2d3c_hw_optimized(img_c1, img_c2, img_c3, T, T, T)
-ecp3_hw_test = euprima.ecp_2d3c_hw_optimized_test(img_c1, img_c2, img_c3, T, T, T)
-ecp3_hl_mc = euprima.ecp_2d3c_hl_mc(img_c1, img_c2, img_c3, T, T, T)
-
-print("ECP_2d3c")
-testing_utils.check_pairwise_equality([ecp3_naive, ecp3, ecp3_o, ecp3_hw, ecp3_hw_test, ecp3_hl_mc], labels=["ecp3_naive", "ecp3","ecp3_o","ecp3_hw", "ecp3_hw_test", "ecp3_hl_mc"])
-
-#print(ecp3_naive)
-#print(ecp3)
+print(np.array_equal(euprima.ecp_ind_2d3c_naive(img2_c1, img2_c2, img2_c3, 2, 2, 2), euprima.ecp_hale_i_2d3c(img2_c1, img2_c2, img2_c3, 2, 2, 2)))

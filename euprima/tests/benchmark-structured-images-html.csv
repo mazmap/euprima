@@ -1,0 +1,10 @@
+Image Path,Width (px),Height (px),HEWA3 (s),BELT3 (s),HALE3t (s),HALE3i (s)
+test-images/tigger.jpg,3024,4032,51.772,59.5544,4.9232,18.7941
+test-images/ship.jpg,3888,5184,39.0291,48.3297,7.1881,29.3502
+test-images/bird.jpg,5027,4022,60.6993,73.4462,7.946,30.9317
+test-images/mountains.jpg,4000,2667,41.4552,48.5337,4.2883,16.4137
+test-images/night-sky-lines.jpg,6000,4000,89.5775,103.4683,9.4588,38.051
+test-images/minarett.jpg,3826,5739,62.4832,73.5995,8.0929,32.6622
+test-images/mountains-silhouette.jpg,5424,8136,76.1306,96.7763,14.9869,63.5693
+test-images/desert.jpg,4160,6240,58.8618,73.9949,9.1377,38.4697
+test-images/white-flower-red-background.jpg,3739,5609,70.9024,82.0613,7.969,31.8835

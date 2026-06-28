@@ -1,0 +1,5 @@
+BasedOnStyle: LLVM
+IndentWidth: 4                  # Sets spacing/indent to 4 spaces
+IndentCaseLabels: true
+AllowShortBlocksOnASingleLine: Never
+# SpaceBeforeParens: ControlStatements # Adds correct spacing, e.g., "if (cond)" instead of "if(cond)"
