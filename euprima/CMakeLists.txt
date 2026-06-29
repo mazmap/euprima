@@ -10,3 +10,9 @@ find_package(pybind11 REQUIRED)
 
 # Create the extension module
 pybind11_add_module(euprima cppbinding/profiles.cpp)
+
+target_compile_options(euprima PRIVATE
+    $<$<CXX_COMPILER_ID:GNU>:-O3 -march=native>
+    $<$<CXX_COMPILER_ID:Clang>:-O3 -march=native>
+    $<$<CXX_COMPILER_ID:MSVC>:/O2 /arch:AVX2>
+)

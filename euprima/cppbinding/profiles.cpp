@@ -7,6 +7,7 @@ namespace py = pybind11;
 #include <vector>
 
 #include <algorithm> // for std::min
+#include <iostream>
 
 template <typename T> class Matrix2d {
   private:
@@ -16,6 +17,16 @@ template <typename T> class Matrix2d {
   public:
     Matrix2d(size_t r, size_t c, T init_val = T())
         : rows(r), cols(c), data(r * c, init_val) {}
+
+    Matrix2d(py::array_t<T, py::array::c_style> arr) {
+        rows = arr.shape(0);
+        cols = arr.shape(1);
+
+        data.resize(rows * cols);
+
+        const T *src = arr.data();
+        std::copy(src, src + (rows * cols), data.begin());
+    }
 
     // No folds, no lambdas. Pure, simple math the compiler loves.
     T &operator()(size_t r, size_t c) { return data[r * cols + c]; }
@@ -409,18 +420,40 @@ std::bitset<8> neigh_matrix_lex(Matrix2d<int> &image, int i, int j, int f) {
     return neigh;
 }
 
-Matrix2d<int> pad_img_2d(py::array_t<int> image, int val) {
-    auto img = image.unchecked<2>();
+// Matrix2d<int> pad_img_2d(py::array_t<int> image, int val) {
+//     auto img = image.unchecked<2>();
+//
+//     size_t N = img.shape(0);
+//     size_t M = img.shape(1);
+//
+//     Matrix2d<int> padded_img(N + 2, M + 2, val);
+//
+//     for (size_t i = 1; i < N + 1; ++i) {
+//         for (size_t j = 1; j < M + 1; ++j) {
+//             padded_img(i, j) = img(i - 1, j - 1);
+//         }
+//     }
+//
+//     return padded_img;
+// }
 
-    size_t N = img.shape(0);
-    size_t M = img.shape(1);
+Matrix2d<int> pad_img_2d(py::array_t<int, py::array::c_style> image, int val) {
+    size_t N = image.shape(0);
+    size_t M = image.shape(1);
 
+    // 1. Allocate the padded matrix
     Matrix2d<int> padded_img(N + 2, M + 2, val);
 
-    for (size_t i = 1; i < N + 1; ++i) {
-        for (size_t j = 1; j < M + 1; ++j) {
-            padded_img(i, j) = img(i - 1, j - 1);
-        }
+    const int *src_ptr = image.data();
+    int *dest_ptr = padded_img.data_ptr();
+    size_t padded_cols = M + 2;
+
+    // 2. Copy row by row using highly optimized contiguous memory transfers
+    for (size_t i = 0; i < N; ++i) {
+        const int *src_row = src_ptr + (i * M);
+        int *dest_row = dest_ptr + ((i + 1) * padded_cols) + 1;
+
+        std::copy(src_row, src_row + M, dest_row);
     }
 
     return padded_img;
@@ -671,6 +704,8 @@ py::array_t<int> py_ecp_hewa_2d3c(py::array_t<int> image_c1,
     return result;
 }
 
+// HALE:T(2,3)
+
 py::array_t<int> py_ecp_hale_t_2d3c(py::array_t<int> image_c1,
                                     py::array_t<int> image_c2,
                                     py::array_t<int> image_c3, int T1, int T2,
@@ -844,78 +879,76 @@ py::array_t<int> py_ecp_hale_t_2d3c(py::array_t<int> image_c1,
     return result;
 }
 
-py::array_t<int> py_ecp_hale_v_2d3c(py::array_t<int> image_c1,
-                                    py::array_t<int> image_c2,
-                                    py::array_t<int> image_c3, int T1, int T2,
-                                    int T3) {
-    auto img_c1 = image_c1.unchecked<2>();
-    auto img_c2 = image_c2.unchecked<2>();
-    auto img_c3 = image_c3.unchecked<2>();
+// HALE:V(2,3)
 
-    size_t num_rows = img_c1.shape(0);
-    size_t num_cols = img_c2.shape(1);
+py::array_t<int>
+py_ecp_hale_v_2d3c(py::array_t<int, py::array::c_style> image_c1,
+                   py::array_t<int, py::array::c_style> image_c2,
+                   py::array_t<int, py::array::c_style> image_c3, int T1,
+                   int T2, int T3) {
+    Matrix2d img_c1(image_c1);
+    Matrix2d img_c2(image_c2);
+    Matrix2d img_c3(image_c3);
+
+    size_t num_rows = image_c1.shape(0);
+    size_t num_cols = image_c1.shape(1);
 
     Matrix3d<int> ecp(T1 + 1, T2 + 1, T3 + 1, 0);
 
-    // o----
-    // |
-    // |
+    //     |
+    //     |
+    // ----o
 
     // inner pixels
-    for (size_t i = 0; i < num_rows - 1; ++i) {
-        for (size_t j = 0; j < num_cols - 1; ++j) {
+    for (size_t i = 1; i < num_rows; ++i) {
+        for (size_t j = 1; j < num_cols; ++j) {
             // square
-            ecp(std::max({img_c1(i, j), img_c1(i + 1, j), img_c1(i + 1, j + 1),
-                          img_c1(i, j + 1)}),
-                std::max({img_c2(i, j), img_c2(i + 1, j), img_c2(i + 1, j + 1),
-                          img_c2(i, j + 1)}),
-                std::max({img_c3(i, j), img_c3(i + 1, j), img_c3(i + 1, j + 1),
-                          img_c3(i, j + 1)})) += 1;
+            ecp(std::max({img_c1(i, j), img_c1(i - 1, j), img_c1(i - 1, j - 1),
+                          img_c1(i, j - 1)}),
+                std::max({img_c2(i, j), img_c2(i - 1, j), img_c2(i - 1, j - 1),
+                          img_c2(i, j - 1)}),
+                std::max({img_c3(i, j), img_c3(i - 1, j), img_c3(i - 1, j - 1),
+                          img_c3(i, j - 1)})) += 1;
 
-            // top edge
-            ecp(std::max({img_c1(i, j), img_c1(i, j + 1)}),
-                std::max({img_c2(i, j), img_c2(i, j + 1)}),
-                std::max({img_c3(i, j), img_c3(i, j + 1)})) += -1;
+            // bottom edge
+            ecp(std::max({img_c1(i, j), img_c1(i, j - 1)}),
+                std::max({img_c2(i, j), img_c2(i, j - 1)}),
+                std::max({img_c3(i, j), img_c3(i, j - 1)})) += -1;
 
-            // left edge
-            ecp(std::max({img_c1(i, j), img_c1(i + 1, j)}),
-                std::max({img_c2(i, j), img_c2(i + 1, j)}),
-                std::max({img_c3(i, j), img_c3(i + 1, j)})) += -1;
+            // right edge
+            ecp(std::max({img_c1(i, j), img_c1(i - 1, j)}),
+                std::max({img_c2(i, j), img_c2(i - 1, j)}),
+                std::max({img_c3(i, j), img_c3(i - 1, j)})) += -1;
 
-            // top-left vertex
+            // bottom-right vertex
             ecp(img_c1(i, j), img_c2(i, j), img_c3(i, j)) += 1;
         }
     }
 
-    // pixels at the right edge
-    for (size_t i = 0; i < num_rows - 1; ++i) {
-        // top-left vertex
-        ecp(img_c1(i, num_cols - 1), img_c2(i, num_cols - 1),
-            img_c3(i, num_cols - 1)) += 1;
+    // pixels at the left edge
+    for (size_t i = 1; i < num_rows; ++i) {
+        // bottom-right vertex
+        ecp(img_c1(i, 0), img_c2(i, 0), img_c3(i, 0)) += 1;
 
-        // left edge
-        ecp(std::max({img_c1(i, num_cols - 1), img_c1(i + 1, num_cols - 1)}),
-            std::max({img_c2(i, num_cols - 1), img_c2(i + 1, num_cols - 1)}),
-            std::max({img_c3(i, num_cols - 1), img_c3(i + 1, num_cols - 1)})) +=
-            -1;
+        // right edge
+        ecp(std::max({img_c1(i, 0), img_c1(i - 1, 0)}),
+            std::max({img_c2(i, 0), img_c2(i - 1, 0)}),
+            std::max({img_c3(i, 0), img_c3(i - 1, 0)})) += -1;
     }
 
-    // pixels at the bottom edge
-    for (size_t j = 0; j < num_cols - 1; ++j) {
+    // pixels at the top edge
+    for (size_t j = 1; j < num_cols; ++j) {
         // top-left vertex
-        ecp(img_c1(num_rows - 1, j), img_c2(num_rows - 1, j),
-            img_c3(num_rows - 1, j)) += 1;
+        ecp(img_c1(0, j), img_c2(0, j), img_c3(0, j)) += 1;
 
         // top edge
-        ecp(std::max({img_c1(num_rows - 1, j), img_c1(num_rows - 1, j + 1)}),
-            std::max({img_c2(num_rows - 1, j), img_c2(num_rows - 1, j + 1)}),
-            std::max({img_c3(num_rows - 1, j), img_c3(num_rows - 1, j + 1)})) +=
-            -1;
+        ecp(std::max({img_c1(0, j), img_c1(0, j - 1)}),
+            std::max({img_c2(0, j), img_c2(0, j - 1)}),
+            std::max({img_c3(0, j), img_c3(0, j - 1)})) += -1;
     }
 
-    // bottom-right pixel
-    ecp(img_c1(num_rows - 1, num_cols - 1), img_c2(num_rows - 1, num_cols - 1),
-        img_c3(num_rows - 1, num_cols - 1)) += 1;
+    // top-left pixel
+    ecp(img_c1(0, 0), img_c2(0, 0), img_c3(0, 0)) += 1;
 
     for (int r = 0; r <= T1; ++r) {
         for (int s = 0; s <= T2; ++s) {
@@ -952,6 +985,8 @@ py::array_t<int> py_ecp_hale_v_2d3c(py::array_t<int> image_c1,
 
     return result;
 }
+
+// HALE:I(2,3)
 
 int pwr_sgn(int n) { return 1 - 2 * (1 & n); }
 
@@ -1777,99 +1812,108 @@ py::array_t<int> list_of_minimal_grades_vertex(py::array_t<int> image_c1,
 
     size_t cube_counter = 0;
 
-    // o----
-    // |
-    // |
+    //     |
+    //     |
+    // ----o
 
     // inner pixels
-    for (size_t i = 0; i < num_rows - 1; ++i) {
-        for (size_t j = 0; j < num_cols - 1; ++j) {
+    for (size_t i = 1; i < num_rows; ++i) {
+        for (size_t j = 1; j < num_cols; ++j) {
             // square
             contributions(cube_counter, 0) = 1;
-            contributions(cube_counter, 1) = std::max({img_c1(i, j), img_c1(i + 1, j), img_c1(i + 1, j + 1),
-                          img_c1(i, j + 1)};
-            contributions(cube_counter, 2) = std::max({img_c2(i, j), img_c2(i + 1, j), img_c2(i + 1, j + 1),
-                          img_c2(i, j + 1)});
-            contributions(cube_counter, 3) = std::max({img_c3(i, j), img_c3(i + 1, j), img_c3(i + 1, j + 1),
-                          img_c3(i, j + 1)});
+            contributions(cube_counter, 1) =
+                std::max({img_c1(i, j), img_c1(i - 1, j), img_c1(i - 1, j - 1),
+                          img_c1(i, j - 1)});
+            contributions(cube_counter, 2) =
+                std::max({img_c2(i, j), img_c2(i - 1, j), img_c2(i - 1, j - 1),
+                          img_c2(i, j - 1)});
+            contributions(cube_counter, 3) =
+                std::max({img_c3(i, j), img_c3(i - 1, j), img_c3(i - 1, j - 1),
+                          img_c3(i, j - 1)});
             cube_counter++;
 
-            // top edge
-            ecp(std::max({img_c1(i, j), img_c1(i, j + 1)}),
-                std::max({img_c2(i, j), img_c2(i, j + 1)}),
-                std::max({img_c3(i, j), img_c3(i, j + 1)})) += -1;
+            // bottom edge
+            contributions(cube_counter, 0) = -1;
+            contributions(cube_counter, 1) =
+                std::max({img_c1(i, j), img_c1(i, j - 1)});
+            contributions(cube_counter, 2) =
+                std::max({img_c2(i, j), img_c2(i, j - 1)});
+            contributions(cube_counter, 3) =
+                std::max({img_c3(i, j), img_c3(i, j - 1)});
+            cube_counter++;
 
-            // left edge
-            ecp(std::max({img_c1(i, j), img_c1(i + 1, j)}),
-                std::max({img_c2(i, j), img_c2(i + 1, j)}),
-                std::max({img_c3(i, j), img_c3(i + 1, j)})) += -1;
+            // right edge
+            contributions(cube_counter, 0) = -1;
+            contributions(cube_counter, 1) =
+                std::max({img_c1(i, j), img_c1(i - 1, j)});
+            contributions(cube_counter, 2) =
+                std::max({img_c2(i, j), img_c2(i - 1, j)});
+            contributions(cube_counter, 3) =
+                std::max({img_c3(i, j), img_c3(i - 1, j)});
+            cube_counter++;
 
-            // top-left vertex
-            ecp(img_c1(i, j), img_c2(i, j), img_c3(i, j)) += 1;
+            // bottom-right vertex
+            contributions(cube_counter, 0) = 1;
+            contributions(cube_counter, 1) = img_c1(i, j);
+            contributions(cube_counter, 2) = img_c2(i, j);
+            contributions(cube_counter, 3) = img_c3(i, j);
+            cube_counter++;
         }
     }
 
-    // pixels at the right edge
-    for (size_t i = 0; i < num_rows - 1; ++i) {
-        // top-left vertex
-        ecp(img_c1(i, num_cols - 1), img_c2(i, num_cols - 1),
-            img_c3(i, num_cols - 1)) += 1;
+    // pixels at the left edge
+    for (size_t i = 1; i < num_rows; ++i) {
+        // bottom-right vertex
+        contributions(cube_counter, 0) = 1;
+        contributions(cube_counter, 1) = img_c1(i, 0);
+        contributions(cube_counter, 2) = img_c2(i, 0);
+        contributions(cube_counter, 3) = img_c3(i, 0);
+        cube_counter++;
 
-        // left edge
-        ecp(std::max({img_c1(i, num_cols - 1), img_c1(i + 1, num_cols - 1)}),
-            std::max({img_c2(i, num_cols - 1), img_c2(i + 1, num_cols - 1)}),
-            std::max({img_c3(i, num_cols - 1), img_c3(i + 1, num_cols - 1)})) +=
-            -1;
+        // right edge
+        contributions(cube_counter, 0) = -1;
+        contributions(cube_counter, 1) =
+            std::max({img_c1(i, 0), img_c1(i - 1, 0)});
+        contributions(cube_counter, 2) =
+            std::max({img_c2(i, 0), img_c2(i - 1, 0)});
+        contributions(cube_counter, 3) =
+            std::max({img_c3(i, 0), img_c3(i - 1, 0)});
+        cube_counter++;
     }
 
-    // pixels at the bottom edge
-    for (size_t j = 0; j < num_cols - 1; ++j) {
+    // pixels at the top edge
+    for (size_t j = 1; j < num_cols; ++j) {
         // top-left vertex
-        ecp(img_c1(num_rows - 1, j), img_c2(num_rows - 1, j),
-            img_c3(num_rows - 1, j)) += 1;
+        contributions(cube_counter, 0) = 1;
+        contributions(cube_counter, 1) = img_c1(0, j);
+        contributions(cube_counter, 2) = img_c2(0, j);
+        contributions(cube_counter, 3) = img_c3(0, j);
+        cube_counter++;
 
         // top edge
-        ecp(std::max({img_c1(num_rows - 1, j), img_c1(num_rows - 1, j + 1)}),
-            std::max({img_c2(num_rows - 1, j), img_c2(num_rows - 1, j + 1)}),
-            std::max({img_c3(num_rows - 1, j), img_c3(num_rows - 1, j + 1)})) +=
-            -1;
+        contributions(cube_counter, 0) = -1;
+        contributions(cube_counter, 1) =
+            std::max({img_c1(0, j), img_c1(0, j - 1)});
+        contributions(cube_counter, 2) =
+            std::max({img_c2(0, j), img_c2(0, j - 1)});
+        contributions(cube_counter, 3) =
+            std::max({img_c3(0, j), img_c3(0, j - 1)});
+        cube_counter++;
     }
 
-    // bottom-right pixel
-    ecp(img_c1(num_rows - 1, num_cols - 1), img_c2(num_rows - 1, num_cols - 1),
-        img_c3(num_rows - 1, num_cols - 1)) += 1;
+    // top-left pixel
+    contributions(cube_counter, 0) = 1;
+    contributions(cube_counter, 1) = img_c1(0, 0);
+    contributions(cube_counter, 2) = img_c2(0, 0);
+    contributions(cube_counter, 3) = img_c3(0, 0);
 
-    for (int r = 0; r <= T1; ++r) {
-        for (int s = 0; s <= T2; ++s) {
-            for (int t = 1; t <= T3; ++t) {
-                ecp(r, s, t) += ecp(r, s, t - 1);
-            }
-        }
-    }
-    for (int r = 0; r <= T1; ++r) {
-        for (int s = 1; s <= T2; ++s) {
-            for (int t = 0; t <= T3; ++t) {
-                ecp(r, s, t) += ecp(r, s - 1, t);
-            }
-        }
-    }
-
-    for (size_t r = 1; r < T1 + 1; ++r) {
-        for (size_t s = 0; s < T2 + 1; ++s) {
-            for (size_t t = 0; t < T3 + 1; ++t) {
-                ecp(r, s, t) += ecp(r - 1, s, t);
-            }
-        }
-    }
-
-    py::array_t<int> result({(size_t)T1 + 1, (size_t)T2 + 1, (size_t)T3 + 1});
-    auto r = result.mutable_unchecked<3>();
-    for (int v = 0; v <= T1; ++v) {
-        for (int s = 0; s <= T2; ++s) {
-            for (int t = 0; t <= T3; ++t) {
-                r(v, s, t) = ecp(v, s, t);
-            }
-        }
+    py::array_t<int> result({num_cubes, (size_t)4});
+    auto r = result.mutable_unchecked<2>();
+    for (int i = 0; i < num_cubes; ++i) {
+        r(i, 0) = contributions(i, 0);
+        r(i, 1) = contributions(i, 1);
+        r(i, 2) = contributions(i, 2);
+        r(i, 3) = contributions(i, 3);
     }
 
     return result;
@@ -1900,13 +1944,16 @@ PYBIND11_MODULE(euprima, m) {
         "top-cells of a 2-dimensional 3-channel image");
 
     m.def(
-        "list_of_minimal_grades", &list_of_minimal_grades,
+        "list_of_minimal_grades_top_cell", &list_of_minimal_grades_top_cell,
         "Yields list of the form [dimension-sign, t1, t2, t3, dimension-sign, "
         "t1, t2, t3, ...] containing the minimal grade (t1,t2,t3) = f(sigma) "
         "for every elementary cube with respect to the top-cell filtration");
+    m.def("ecp_hale_eulearning_2d3c", &py_ecp_hale_eulearning_2d3c,
+          "Computes the ECP of a sublevel filtration based on a precomputed "
+          "list of minimal grades");
     m.def(
-        "ecp_hale_eulearning_2d3c", &py_ecp_hale_eulearning_2d3c,
-        "HALE:T(2,3) algorithm to compute the ECP of the filtration induced by "
-        "top-cells of a 2-dimensional 3-channel image using precomputed list "
-        "of minimal grades");
+        "list_of_minimal_grades_vertex", &list_of_minimal_grades_vertex,
+        "Yields list of the form [dimension-sign, t1, t2, t3, dimension-sign, "
+        "t1, t2, t3, ...] containing the minimal grade (t1,t2,t3) = f(sigma) "
+        "for every elementary cube with respect to the vertex filtration");
 }

@@ -10,9 +10,9 @@ import build.euprima as euprima
 import testing_utils
 
 T = 255
-N = 20000
+N = 5000
 STEPS = 1000
-START = 6000
+START = 1000
 SAMPLES_PER_N = 1
 
 filename = "benchmark_hale"

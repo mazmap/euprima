@@ -53,7 +53,6 @@ img2_c3 = np.array([[0,0,0], [0,0,0], [0,0,0]])
 ecp_hale_t_img1 = euprima.ecp_hale_t_2d3c(img1_c1, img1_c2, img1_c3, 2, 2, 2)
 ecp_hale_i_img1 = euprima.ecp_hale_i_2d3c(img1_c1, img1_c2, img1_c3, 2, 2, 2)
 ecp_naive_img1 = euprima.ecp_ind_2d3c_naive(img1_c1, img1_c2, img1_c3, 2, 2, 2)
-ecp_hale_v_img1 = euprima.ecp_ind_2d3c_naive(img2_c1, img2_c2, img2_c3, 2, 2, 2)
 
 print(ecp_hale_t_img1[0][0][0], ecp_hale_t_img1[0][1][0], ecp_hale_t_img1[0][2][0])
 print(ecp_hale_t_img1[1][0][0], ecp_hale_t_img1[1][1][0], ecp_hale_t_img1[1][2][0])
@@ -66,10 +65,17 @@ print()
 print(ecp_naive_img1[0][0][0], ecp_naive_img1[0][1][0], ecp_naive_img1[0][2][0])
 print(ecp_naive_img1[1][0][0], ecp_naive_img1[1][1][0], ecp_naive_img1[1][2][0])
 print(ecp_naive_img1[2][0][0], ecp_naive_img1[2][1][0], ecp_naive_img1[2][2][0])
-print()
+
+print(np.array_equal(euprima.ecp_ind_2d3c_naive(img2_c1, img2_c2, img2_c3, 2, 2, 2), euprima.ecp_hale_i_2d3c(img2_c1, img2_c2, img2_c3, 2, 2, 2)))
+
+T=2
+N=3
+img_c1 = np.random.randint(0, T+1, (N,N), dtype=np.int32)
+img_c2 = np.random.randint(0, T+1, (N,N), dtype=np.int32)
+img_c3 = np.zeros((N,N), dtype=np.int32)
+ecp_hale_v_img1 = euprima.ecp_hale_v_2d3c(img_c1, img_c2, img_c3, 2, 2, 2)
+print("ECP of vertex filtration")
+print(np.stack((img_c1, img_c2), axis=-1))
 print(ecp_hale_v_img1[0][0][0], ecp_hale_v_img1[0][1][0], ecp_hale_v_img1[0][2][0])
 print(ecp_hale_v_img1[1][0][0], ecp_hale_v_img1[1][1][0], ecp_hale_v_img1[1][2][0])
 print(ecp_hale_v_img1[2][0][0], ecp_hale_v_img1[2][1][0], ecp_hale_v_img1[2][2][0])
-
-
-print(np.array_equal(euprima.ecp_ind_2d3c_naive(img2_c1, img2_c2, img2_c3, 2, 2, 2), euprima.ecp_hale_i_2d3c(img2_c1, img2_c2, img2_c3, 2, 2, 2)))
