@@ -50,13 +50,13 @@ summary1 = testing_utils.benchmark(euprima.ecp_hale_t_2d3c, input_generator, ig_
 append_column_to_csv("HALE:T(2,3) [euprima]", summary1, ig_args)
 
 summary2 = testing_utils.benchmark(euprima.ecp_hale_v_2d3c, input_generator, ig_args)
-append_column_to_csv("HALE:V(2,3) [euprima]", summary1, ig_args)
+append_column_to_csv("HALE:V(2,3) [euprima]", summary2, ig_args)
 
 summary3 = testing_utils.benchmark(euprima.ecp_hale_i_2d3c, input_generator, ig_args)
-append_column_to_csv("HALE:I(2,3) [euprima]", summary2, ig_args)
+append_column_to_csv("HALE:I(2,3) [euprima]", summary3, ig_args)
 
 summary4 = testing_utils.benchmark(euprima.ecp_hewa_2d3c, input_generator, ig_args)
-append_column_to_csv("HEWA(2,3) [euprima]", summary3, ig_args)
+append_column_to_csv("HEWA(2,3) [euprima]", summary4, ig_args)
 
 def eulearning(img_c1, img_c2, img_c3, T1, T2, T3): 
     contributions = euprima.list_of_minimal_grades(img_c1, img_c2, img_c3)
@@ -67,10 +67,10 @@ def ecp_hale_eulearning_2d3c_contributions(img_c1, img_c2, img_c3, T1, T2, T3):
     return euprima.ecp_hale_eulearning_2d3c(contributions, T1, T2, T3)
 
 summary5 = testing_utils.benchmark(eulearning, input_generator, ig_args)
-append_column_to_csv("HALE:T(2,3) [eulearning]", summary4, ig_args)
+append_column_to_csv("HALE:T(2,3) [eulearning]", summary5, ig_args)
 
 summary6 = testing_utils.benchmark(ecp_hale_eulearning_2d3c_contributions, input_generator, ig_args)
-append_column_to_csv("HALE:T(2,3) like eulearning [euprima]", summary5, ig_args)
+append_column_to_csv("HALE:T(2,3) like eulearning [euprima]", summary6, ig_args)
 
 euler_changes = euprima.belt_2d_euler_changes()
 def input_generator2(n):
@@ -84,7 +84,7 @@ def input_generator2(n):
     ]
 
 summary7 = testing_utils.benchmark(euprima.ecp_belt_2d3c, input_generator2, ig_args)
-append_column_to_csv("BELT(2,3) [euprima]", summary6, ig_args)
+append_column_to_csv("BELT(2,3) [euprima]", summary7, ig_args)
 
 
 # Plotting logic remains the same (pulling from the in-memory lists)

@@ -1243,9 +1243,9 @@ py::array_t<int> py_ecp_hale_i_2d3c(py::array_t<int> image_c1,
     return result;
 }
 
-py::array_t<int> list_of_minimal_grades(py::array_t<int> image_c1,
-                                        py::array_t<int> image_c2,
-                                        py::array_t<int> image_c3) {
+py::array_t<int> list_of_minimal_grades_top_cell(py::array_t<int> image_c1,
+                                                 py::array_t<int> image_c2,
+                                                 py::array_t<int> image_c3) {
     auto img_c1 = image_c1.unchecked<2>();
     auto img_c2 = image_c2.unchecked<2>();
     auto img_c3 = image_c3.unchecked<2>();
@@ -1744,6 +1744,119 @@ py::array_t<int> py_ecp_hale_eulearning_2d3c(py::array_t<int> contributions,
     for (size_t r = 1; r <= T1; ++r) {
         for (size_t s = 0; s <= T2; ++s) {
             for (size_t t = 0; t <= T3; ++t) {
+                ecp(r, s, t) += ecp(r - 1, s, t);
+            }
+        }
+    }
+
+    py::array_t<int> result({(size_t)T1 + 1, (size_t)T2 + 1, (size_t)T3 + 1});
+    auto r = result.mutable_unchecked<3>();
+    for (int v = 0; v <= T1; ++v) {
+        for (int s = 0; s <= T2; ++s) {
+            for (int t = 0; t <= T3; ++t) {
+                r(v, s, t) = ecp(v, s, t);
+            }
+        }
+    }
+
+    return result;
+}
+
+py::array_t<int> list_of_minimal_grades_vertex(py::array_t<int> image_c1,
+                                               py::array_t<int> image_c2,
+                                               py::array_t<int> image_c3) {
+    auto img_c1 = image_c1.unchecked<2>();
+    auto img_c2 = image_c2.unchecked<2>();
+    auto img_c3 = image_c3.unchecked<2>();
+
+    size_t num_rows = img_c1.shape(0);
+    size_t num_cols = img_c2.shape(1);
+
+    size_t num_cubes = (2 * num_rows - 1) * (2 * num_cols - 1);
+    Matrix2d<int> contributions(num_cubes, 4, 0);
+
+    size_t cube_counter = 0;
+
+    // o----
+    // |
+    // |
+
+    // inner pixels
+    for (size_t i = 0; i < num_rows - 1; ++i) {
+        for (size_t j = 0; j < num_cols - 1; ++j) {
+            // square
+            contributions(cube_counter, 0) = 1;
+            contributions(cube_counter, 1) = std::max({img_c1(i, j), img_c1(i + 1, j), img_c1(i + 1, j + 1),
+                          img_c1(i, j + 1)};
+            contributions(cube_counter, 2) = std::max({img_c2(i, j), img_c2(i + 1, j), img_c2(i + 1, j + 1),
+                          img_c2(i, j + 1)});
+            contributions(cube_counter, 3) = std::max({img_c3(i, j), img_c3(i + 1, j), img_c3(i + 1, j + 1),
+                          img_c3(i, j + 1)});
+            cube_counter++;
+
+            // top edge
+            ecp(std::max({img_c1(i, j), img_c1(i, j + 1)}),
+                std::max({img_c2(i, j), img_c2(i, j + 1)}),
+                std::max({img_c3(i, j), img_c3(i, j + 1)})) += -1;
+
+            // left edge
+            ecp(std::max({img_c1(i, j), img_c1(i + 1, j)}),
+                std::max({img_c2(i, j), img_c2(i + 1, j)}),
+                std::max({img_c3(i, j), img_c3(i + 1, j)})) += -1;
+
+            // top-left vertex
+            ecp(img_c1(i, j), img_c2(i, j), img_c3(i, j)) += 1;
+        }
+    }
+
+    // pixels at the right edge
+    for (size_t i = 0; i < num_rows - 1; ++i) {
+        // top-left vertex
+        ecp(img_c1(i, num_cols - 1), img_c2(i, num_cols - 1),
+            img_c3(i, num_cols - 1)) += 1;
+
+        // left edge
+        ecp(std::max({img_c1(i, num_cols - 1), img_c1(i + 1, num_cols - 1)}),
+            std::max({img_c2(i, num_cols - 1), img_c2(i + 1, num_cols - 1)}),
+            std::max({img_c3(i, num_cols - 1), img_c3(i + 1, num_cols - 1)})) +=
+            -1;
+    }
+
+    // pixels at the bottom edge
+    for (size_t j = 0; j < num_cols - 1; ++j) {
+        // top-left vertex
+        ecp(img_c1(num_rows - 1, j), img_c2(num_rows - 1, j),
+            img_c3(num_rows - 1, j)) += 1;
+
+        // top edge
+        ecp(std::max({img_c1(num_rows - 1, j), img_c1(num_rows - 1, j + 1)}),
+            std::max({img_c2(num_rows - 1, j), img_c2(num_rows - 1, j + 1)}),
+            std::max({img_c3(num_rows - 1, j), img_c3(num_rows - 1, j + 1)})) +=
+            -1;
+    }
+
+    // bottom-right pixel
+    ecp(img_c1(num_rows - 1, num_cols - 1), img_c2(num_rows - 1, num_cols - 1),
+        img_c3(num_rows - 1, num_cols - 1)) += 1;
+
+    for (int r = 0; r <= T1; ++r) {
+        for (int s = 0; s <= T2; ++s) {
+            for (int t = 1; t <= T3; ++t) {
+                ecp(r, s, t) += ecp(r, s, t - 1);
+            }
+        }
+    }
+    for (int r = 0; r <= T1; ++r) {
+        for (int s = 1; s <= T2; ++s) {
+            for (int t = 0; t <= T3; ++t) {
+                ecp(r, s, t) += ecp(r, s - 1, t);
+            }
+        }
+    }
+
+    for (size_t r = 1; r < T1 + 1; ++r) {
+        for (size_t s = 0; s < T2 + 1; ++s) {
+            for (size_t t = 0; t < T3 + 1; ++t) {
                 ecp(r, s, t) += ecp(r - 1, s, t);
             }
         }
