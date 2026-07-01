@@ -1,8 +1,12 @@
 import numpy as np
-import build.euprima as euprima
 # import euchar.utils, euchar.surface
 from tabulate import tabulate
 import testing_utils
+
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+import build.euprima as euprima
 
 #binary_image = np.random.randint(0, 2, (6,6), dtype=np.uint8)
 # binary_image = np.array([
@@ -46,9 +50,9 @@ img1_c1 = np.array([[1,2]], dtype=np.int32)
 img1_c2 = np.array([[2,1]], dtype=np.int32)
 img1_c3 = np.array([[0,0]], dtype=np.int32)
 # Example from Figure 2.5
-img2_c1 = np.array([[2,2,1], [2,2,2], [1,2,2]])
-img2_c2 = np.array([[2,2,2], [2,2,1], [1,2,2]])
-img2_c3 = np.array([[0,0,0], [0,0,0], [0,0,0]])
+img2_c1 = np.array([[2,2,1], [2,2,2], [1,2,2]], dtype=np.int32)
+img2_c2 = np.array([[2,2,2], [2,2,1], [1,2,2]], dtype=np.int32)
+img2_c3 = np.array([[0,0,0], [0,0,0], [0,0,0]], dtype=np.int32)
 
 ecp_hale_t_img1 = euprima.ecp_hale_t_2d3c(img1_c1, img1_c2, img1_c3, 2, 2, 2)
 ecp_hale_i_img1 = euprima.ecp_hale_i_2d3c(img1_c1, img1_c2, img1_c3, 2, 2, 2)
