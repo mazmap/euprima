@@ -2,13 +2,10 @@
 Euler (characteristic) profiles for image analysis.
 
 # Disclaimer
-This project was started for my ongoing bachelors thesis on the _efficient computation of three-parameter Euler characteristic profiles for (two-dimensional) three-channel digital images_. 
-The main result of the thesis is a generalization of Algorithm 2 in the paper [Euler characteristic surfaces](https://www.research.ed.ac.uk/en/publications/euler-characteristic-surfaces/) by Beltramo et al. 
-Moreover, the thesis corrects a fundamental mistake from this paper and gives a detailed proof of the generalized algorithm. 
-Once the thesis is finished, it will also be linked to from this README. 
+This project was started for my bachelors thesis on the _efficient computation of Euler characteristic profiles for three-channel digital images_. 
+Once the thesis has been accepted, it will also be linked to from this README. 
 
 At the moment this repository is still very much a **work in progress** and hence very unorganized and messy. 
 Once I finally come up with a better (i.e. more organized) folder structure, this repository will be reorganized accordingly. 
 
-Lastly, it should be noted that this project reimplements a few of the functions from the [`euchar`](https://github.com/gbeltramo/euchar) package in a much more efficient way. 
-More details around this reimplementation will be given in the near future. 
+For the benchmarks against the [`eulearning`](https://github.com/vadimlebovici/eulearning) implementation by Hacquard and Lebovici, we include their full implementation in the `tests/` folder. 
