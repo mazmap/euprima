@@ -211,10 +211,6 @@ int ec_binary_image_2d_naive(Matrix2d<uint8_t> &image) {
     return v - e + f;
 }
 
-int py_ec_binary_image_2d_naive(py::array_t<uint8_t> image) {
-    // TODO: Wrapper function
-}
-
 // Computing the EC of a binary image according to: S. B. Gray, "Local
 // Properties of Binary Images in Two Dimensions," in IEEE Transactions on
 // Computers, vol. C-20, no. 5, pp. 551-561, May 1971,
@@ -966,9 +962,9 @@ py_ecp_hale_v_2d3c(py::array_t<int, py::array::c_style> image_c1,
                    py::array_t<int, py::array::c_style> image_c2,
                    py::array_t<int, py::array::c_style> image_c3, int T1,
                    int T2, int T3) {
-    Matrix2d img_c1(image_c1);
-    Matrix2d img_c2(image_c2);
-    Matrix2d img_c3(image_c3);
+    Matrix2d<int> img_c1(image_c1);
+    Matrix2d<int> img_c2(image_c2);
+    Matrix2d<int> img_c3(image_c3);
 
     size_t num_rows = image_c1.shape(0);
     size_t num_cols = image_c1.shape(1);
@@ -1363,9 +1359,9 @@ py::array_t<int>
 list_of_minimal_grades_top_cell(py::array_t<int, py::array::c_style> image_c1,
                                 py::array_t<int, py::array::c_style> image_c2,
                                 py::array_t<int, py::array::c_style> image_c3) {
-    Matrix2d img_c1(image_c1);
-    Matrix2d img_c2(image_c2);
-    Matrix2d img_c3(image_c3);
+    Matrix2d<int> img_c1(image_c1);
+    Matrix2d<int> img_c2(image_c2);
+    Matrix2d<int> img_c3(image_c3);
 
     size_t num_rows = image_c1.shape(0);
     size_t num_cols = image_c2.shape(1);

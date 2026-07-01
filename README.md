@@ -13,8 +13,12 @@ The CMAKE Build-Setup has only been tested on my own 2021 Apple Silicon Macbook 
 For the benchmarks against the [`eulearning`](https://github.com/vadimlebovici/eulearning) implementation by Hacquard and Lebovici, we include their full implementation in the `tests/` folder. 
 
 # Building
-To build the [pybind11](https://pybind11.readthedocs.io/en/stable/index.html) interface, create a `build/` folder, navigate into it and execute `cmake ..` followed by `make`. 
-The C++ implementation needs no external dependencies. 
+The C++ implementation needs no external dependencies apart from a global `pybind11` installation. 
+To build the [pybind11](https://pybind11.readthedocs.io/en/stable/index.html) interface execute 
+```
+cmake -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build 
+```
 
 For executing the tests and benchmarks in `tests/` you will need various Python packages such as `numpy` and `pandas`. 
 To install all required packages, you can use the [`uv`](https://docs.astral.sh/uv/) package/project manager. 
