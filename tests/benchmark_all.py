@@ -15,7 +15,7 @@ T = 255
 N = 5000
 STEPS = 1000
 START = 1000
-SAMPLES_PER_N = 4
+SAMPLES_PER_N = 1
 
 filename = "benchmark_all"
 csv_file = f"{filename}.csv"

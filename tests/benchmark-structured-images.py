@@ -9,7 +9,7 @@ import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import build.euprima as euprima
 
-filename = "benchmark_structured_images"
+filename = "benchmark_structured_images-2"
 csv_file = f"{filename}.csv"
 
 if os.path.exists(csv_file):

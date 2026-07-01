@@ -5,7 +5,7 @@ from matplotlib.lines import Line2D # Required for custom legend handles
 import matplotlib.ticker as ticker
 
 # Load the benchmark data
-df = pd.read_csv('benchmark_hale.csv')
+df = pd.read_csv('benchmark_hale_rounded.csv')
 
 plt.rcParams.update({
     "font.family": "sans-serif",          # Define the font family
@@ -32,9 +32,9 @@ ax1.set_ylabel('Execution time (seconds)')
 # ax1.set_title('Algorithm Performance Benchmarks')
 
 # Impose a strict MultipleLocator to ensure major ticks occur exactly at 60-second intervals
-ax1.yaxis.set_major_locator(MultipleLocator(20))
+ax1.yaxis.set_major_locator(MultipleLocator(5))
 # Add minor ticks at 10-second intervals for finer granularity
-ax1.yaxis.set_minor_locator(MultipleLocator(10))
+ax1.yaxis.set_minor_locator(MultipleLocator(1))
 
 # Configure gridlines to distinguish between major (minutes) and minor (10-seconds) intervals
 ax1.grid(True, which='major', linestyle='-', alpha=0.6)
@@ -49,9 +49,9 @@ def min_to_sec(minute):
     return minute * 60.0
 
 # Instantiate the secondary y-axis using the defined transformations
-ax2 = ax1.secondary_yaxis('right', functions=(sec_to_min, min_to_sec))
-ax2.set_ylabel('Execution time (minutes)')
-ax2.yaxis.set_major_locator(MultipleLocator(1))
+#ax2 = ax1.secondary_yaxis('right', functions=(sec_to_min, min_to_sec))
+#ax2.set_ylabel('Execution time (minutes)')
+#ax2.yaxis.set_major_locator(MultipleLocator(1))
 
 # 6. Render the legend applying the custom lists
 leg = ax1.legend(loc='upper left')
@@ -60,7 +60,7 @@ leg = ax1.legend(loc='upper left')
 plt.tight_layout()
 
 # Save the figure to a PNG file
-plt.savefig('plot_benchmark_hale.pdf', format="pdf", bbox_inches='tight')
+plt.savefig('plot_benchmark_hale-3.pdf', format="pdf", bbox_inches='tight')
 
 # Close the figure to free up memory 
 plt.close(fig)

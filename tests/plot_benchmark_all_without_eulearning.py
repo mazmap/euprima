@@ -25,7 +25,7 @@ x = df['Image Dimension N']
 
 # Iterate through the dependent variables and plot each configuration
 ax1.plot(x, df["HALE:T(2,3) [euprima]"], marker='o', label="HALE:T(2,3) [euprima]", linestyle="--", color="tab:blue")
-ax1.plot(x, df["HALE:T(2,3) [eulearning]"], marker='o', label="HALE:T(2,3) [eulearning]", linestyle="--", color="tab:green")
+#ax1.plot(x, df["HALE:T(2,3) [eulearning]"], marker='o', label="HALE:T(2,3) [eulearning]", linestyle="--", color="tab:green")
 #ax1.plot(x, df["HALE:T(2,3) like eulearning [euprima]"], marker='o', label="HALE:T(2,3) like eulearning [euprima]", linestyle="--")
 
 ax1.plot(x, df["HALE:V(2,3) [euprima]"], marker='o', label="HALE:V(2,3) [euprima]", linestyle=":", color="tab:orange")
@@ -40,9 +40,9 @@ ax1.set_ylabel('Execution time (seconds)')
 # ax1.set_title('Algorithm Performance Benchmarks')
 
 # Impose a strict MultipleLocator to ensure major ticks occur exactly at 60-second intervals
-ax1.yaxis.set_major_locator(MultipleLocator(60))
+ax1.yaxis.set_major_locator(MultipleLocator(5))
 # Add minor ticks at 10-second intervals for finer granularity
-ax1.yaxis.set_minor_locator(MultipleLocator(10))
+ax1.yaxis.set_minor_locator(MultipleLocator(1))
 
 # Configure gridlines to distinguish between major (minutes) and minor (10-seconds) intervals
 ax1.grid(True, which='major', linestyle='-', alpha=0.6)
@@ -57,9 +57,9 @@ def min_to_sec(minute):
     return minute * 60.0
 
 # Instantiate the secondary y-axis using the defined transformations
-ax2 = ax1.secondary_yaxis('right', functions=(sec_to_min, min_to_sec))
-ax2.set_ylabel('Execution time (minutes)')
-ax2.yaxis.set_major_locator(MultipleLocator(1))
+#ax2 = ax1.secondary_yaxis('right', functions=(sec_to_min, min_to_sec))
+#ax2.set_ylabel('Execution time (minutes)')
+#ax2.yaxis.set_major_locator(MultipleLocator(1))
 
 # --- Legend Grouping Logic ---
 
@@ -72,15 +72,15 @@ blank_handle = Line2D([], [], linestyle='none', marker='none')
 # 5. Manually assemble new lists, inserting the blank handles and header text 
 # (Indices 0,1,2 are your dashed lines; Indices 3,4,5 are your solid lines)
 custom_handles = [
-    blank_handle, handles[0], handles[1],  # Group 1: Header + Dashed
-    blank_handle, handles[2],   # Group 2: Header + Dashed-dot 
-    blank_handle, handles[3], handles[4], handles[5]   # Group 2: Header + Solid
+    blank_handle, handles[0],  # Group 1: Header + Dashed
+    blank_handle, handles[1],   # Group 2: Header + Dashed-dot 
+    blank_handle, handles[2], handles[3], handles[4]   # Group 2: Header + Solid
 ]
 
 custom_labels = [
-    "Top-cell filtration", labels[0], labels[1],  # Group 1: Header + Dashed
-    "Vertex filtration", labels[2],   # Group 2: Header + Dashed-dot
-    "Filtration induced by top-cells", labels[3], labels[4], labels[5]   # Group 2: Header + Solid
+    "Top-cell filtration", labels[0],  # Group 1: Header + Dashed
+    "Vertex filtration", labels[1],   # Group 2: Header + Dashed-dot
+    "Filtration induced by top-cells", labels[2], labels[3], labels[4]   # Group 2: Header + Solid
 ]
 
 # 6. Render the legend applying the custom lists
