@@ -2,7 +2,7 @@
 Euler (characteristic) profiles for image analysis.
 
 # Disclaimer
-This project was started for my bachelors thesis on the _efficient computation of Euler characteristic profiles for three-channel digital images_. 
+This project was started as a prototype implementation for my bachelors thesis on the _efficient computation of Euler characteristic profiles for three-channel digital images_. 
 Once the thesis has been accepted, it will also be linked to from this README. 
 
 At the moment this repository is still very much a **work in progress** and hence very unorganized and messy. 
@@ -17,6 +17,7 @@ To build the [pybind11](https://pybind11.readthedocs.io/en/stable/index.html) in
 The C++ implementation needs no external dependencies. 
 
 For executing the tests and benchmarks in `tests/` you will need various Python packages such as `numpy` and `pandas`. 
+To install all required packages, you can use the [`uv`](https://docs.astral.sh/uv/) package/project manager. 
 
 # Documentation
 I am working on a documentation with clear usage examples for the functions we provide via the `pybind11` interface.
