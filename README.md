@@ -20,7 +20,7 @@ cmake --build build
 
 For executing the tests and benchmarks in `tests/` you will need various Python packages such as `numpy` and `pandas`. 
 To install all required packages, you can use the [`uv`](https://docs.astral.sh/uv/) package/project manager. 
-For the benchmarks against the [`eulearning`](https://github.com/vadimlebovici/eulearning) implementation by Hacquard and Lebovici, you have to clone their repository into `tests/eulearning/`. 
+For the benchmarks against the [`eulearning`](https://github.com/vadimlebovici/eulearning) implementation by Hacquard and Lebovici, you have to clone the `eulearning/` folder in their repository into `tests/eulearning/`. 
 
 # Documentation
 I am working on a documentation with clear usage examples for the functions we provide via the `pybind11` interface.
