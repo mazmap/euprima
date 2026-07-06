@@ -14,6 +14,7 @@ It can be installed using
 ```bash
 pip install euprima
 ```
+For the installation you will need a C++ compiler, `cmake` and `pybind11`. 
 
 # Closing the repository
 This repository uses the [`eulearning`](https://github.com/vadimlebovici/eulearning) repository by Hacquard and Lebovici as a Git submodule for benchmarking.
