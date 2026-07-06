@@ -1,0 +1,18 @@
+[build-system]
+requires = ["scikit-build-core>=0.5.0", "pybind11>=2.13.1"]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "euprima"
+version = "0.1.0"
+description = "Euler characteristic profiles for image analysis"
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = [
+    "numpy",
+    "pandas"
+]
+
+[tool.scikit-build]
+cmake.build-type = "Release"
+cmake.source-dir = "src"

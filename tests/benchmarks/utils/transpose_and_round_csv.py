@@ -68,7 +68,7 @@ def transpose_and_round_csv(input_file: str, output_file: str) -> None:
 if __name__ == "__main__":
     # Example usage:
     # Replace 'input.csv' and 'output.csv' with your actual file paths
-    input_filename = "benchmark_all.csv"
-    output_filename = "benchmark_all_transposed_rounded.csv"
+    input_filename = "benchmark_all_2.csv"
+    output_filename = "benchmark_all_2_transposed_rounded.csv"
 
     transpose_and_round_csv(input_filename, output_filename)

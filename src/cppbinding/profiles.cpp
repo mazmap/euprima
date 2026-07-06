@@ -1999,7 +1999,7 @@ list_of_minimal_grades_vertex(py::array_t<int, py::array::c_style> image_c1,
     return result;
 }
 
-PYBIND11_MODULE(euprima, m) {
+PYBIND11_MODULE(_core, m) {
     m.def("belt_2d_euler_changes", &py_euler_changes_2d,
           "Precomputed the local changes used for the BELT(2,3) algorithm");
     m.def("ecp_ind_2d3c_naive", &py_ecp_ind_2d3c_naive,
