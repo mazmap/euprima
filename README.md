@@ -9,7 +9,7 @@ At the moment this repository is still very much a **work in progress** and henc
 Once I finally come up with a better (i.e. more organized) folder structure, this repository will be reorganized accordingly. 
 
 # Installing the Python package
-You can find the Python interface on PyPI as the [`euprima`]() package. 
+You can find the Python interface on PyPI as the [`euprima`](https://pypi.org/project/euprima) package. 
 It can be installed using 
 ```bash
 pip install euprima
