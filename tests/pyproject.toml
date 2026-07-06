@@ -3,6 +3,7 @@ name = "testing-euprima"
 version = "0.0.1"
 dependencies = [
     "euchar>=0.1.6",
+    "euprima>=0.1.1",
     "matplotlib>=3.11.0",
     "numpy>=2.2.6",
     "pandas>=3.0.3",
