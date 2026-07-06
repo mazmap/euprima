@@ -14,10 +14,6 @@ It can be installed using
 ```bash
 pip install euprima
 ```
-or preferibly using the [`uv`](https://docs.astral.sh/uv/) package/project manager
-```bash
-uv pip install euprima
-```
 
 # Closing the repository
 This repository uses the [`eulearning`](https://github.com/vadimlebovici/eulearning) repository by Hacquard and Lebovici as a Git submodule for benchmarking.
@@ -36,6 +32,7 @@ after cloning
 # Testing and Benchmarks
 For executing the tests and benchmarks in `tests/` you will need various Python packages such as `numpy` and `pandas`. 
 To install all required packages, you can use the [`uv`](https://docs.astral.sh/uv/) package/project manager. 
+All dependencies are listed in `tests/pyproject.toml` (including the `euprima` package). 
 For the benchmarks against the [`eulearning`](https://github.com/vadimlebovici/eulearning) implementation by Hacquard and Lebovici, you have to clone the `eulearning/` folder from their repository into `tests/eulearning/` or clone it as a submodule as described above. 
 
 # Documentation
