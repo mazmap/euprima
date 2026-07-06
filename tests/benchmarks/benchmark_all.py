@@ -2,16 +2,13 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-import utils.benchmark_utils as benchmark_utils
-
 import sys
 import os
-
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../eulearning')))
 from eulearning.descriptors import compute_euler_profile
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
-import build.euprima as euprima
+import euprima
+import utils.benchmark_utils as benchmark_utils
 
 def compute_euler_profile_vectorized(vec_st, bin_sizes):
     # (Assumes assertions are handled or kept)
@@ -111,7 +108,7 @@ append_column_to_csv("BELT(2,3) [euprima]", summary, ig_args)
 
 def eulearning_top_cell(img_c1, img_c2, img_c3, T1, T2, T3): 
     contributions = euprima.list_of_minimal_grades_top_cell(img_c1, img_c2, img_c3)
-    return compute_euler_profile_vectorized(contributions, [(0,T1,T1+1), (0,T2,T2+1), (0,T3,T3+1)])
+    return compute_euler_profile(contributions, [(0,T1,T1+1), (0,T2,T2+1), (0,T3,T3+1)]).transpose()
 
 summary = benchmark_utils.benchmark(eulearning_top_cell, input_generator, ig_args)
 append_column_to_csv("HALE:T(2,3) [eulearning]", summary, ig_args)
@@ -125,7 +122,7 @@ append_column_to_csv("HALE:T(2,3) like eulearning [euprima]", summary, ig_args)
 
 def eulearning_vertex(img_c1, img_c2, img_c3, T1, T2, T3): 
     contributions = euprima.list_of_minimal_grades_vertex(img_c1, img_c2, img_c3)
-    return compute_euler_profile_vectorized(contributions, [(0,T1,T1+1), (0,T2,T2+1), (0,T3,T3+1)])
+    return compute_euler_profile(contributions, [(0,T1,T1+1), (0,T2,T2+1), (0,T3,T3+1)]).transpose()
 
 summary = benchmark_utils.benchmark(eulearning_vertex, input_generator, ig_args)
 append_column_to_csv("HALE:V(2,3) [eulearning]", summary, ig_args)

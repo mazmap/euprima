@@ -2,12 +2,8 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-import sys
-import os
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
-import build.euprima as euprima
-
-import testing_utils
+import euprima
+import utils.benchmark_utils as benchmark_utils
 
 def pad_image(image, value):
     return np.pad(image, ((1, 1), (1, 1), (0, 0)), constant_values=value)
@@ -71,7 +67,7 @@ ig_args = range(START,N+1,STEPS)
 def input_generator1(n):
     return [np.random.randint(0, T+1, (n,n,3), dtype=np.uint8)]
 
-summary1 = testing_utils.benchmark(compute_RGB_contributions, input_generator1, ig_args)
+summary1 = benchmark_utils.benchmark(compute_RGB_contributions, input_generator1, ig_args)
 
 def input_generator2(n):
     return [
@@ -81,18 +77,20 @@ def input_generator2(n):
         for _ in range(SAMPLES_PER_N+1)
     ]
 
-summary2 = testing_utils.benchmark(euprima.compute_contributions, input_generator2, ig_args)
+summary2 = benchmark_utils.benchmark(euprima.list_of_minimal_grades_top_cell, input_generator2, ig_args)
 
 data = {
     "Dlotko/Gurnari": summary1,
     "euprima": summary2,
 }
 
+results_dir = "results/"
 filename = "benchmark_contributions"
+csv_out_path = results_dir + filename + ".csv"
 
 # Convert to DataFrame and save
 df = pd.DataFrame(data)
-df.to_csv(filename+".csv", index=False)
+df.to_csv(results_dir, index=False)
 
 plt.figure(figsize=(10, 6))
 plt.plot(ig_args, [t for t in summary1], label='Dlotko/Gurnari', marker='o', markersize=2)

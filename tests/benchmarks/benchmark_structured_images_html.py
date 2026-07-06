@@ -2,11 +2,9 @@ from PIL import Image
 import numpy as np
 import time
 import csv
-
-import sys
 import os
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-import build.euprima as euprima
+
+import euprima
 
 def benchmark_img(img_path):
     img = Image.open(img_path).convert("RGB")

@@ -3,11 +3,9 @@ import numpy as np
 import pandas as pd
 from tabulate import tabulate
 import time
-import sys
 import os
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-import build.euprima as euprima
+import euprima
 
 filename = "benchmark_structured_images-2"
 csv_file = f"{filename}.csv"

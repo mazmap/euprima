@@ -1,12 +1,7 @@
 import numpy as np
-# import euchar.utils, euchar.surface
-from tabulate import tabulate
-import testing_utils
 
-import sys
-import os
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-import build.euprima as euprima
+import euprima
+import utils.testing_utils as testing_utils
 
 #binary_image = np.random.randint(0, 2, (6,6), dtype=np.uint8)
 # binary_image = np.array([

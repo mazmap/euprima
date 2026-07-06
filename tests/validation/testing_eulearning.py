@@ -1,21 +1,17 @@
 import numpy as np
 
-from eulearning.descriptors import compute_euler_profile
-
 import sys
 import os
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-import build.euprima as euprima
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../eulearning')))
+from eulearning.descriptors import compute_euler_profile
 
-import testing_utils
+import euprima
+import utils.testing_utils as testing_utils
 
 def compute_euler_profile_vectorized(vec_st, bin_sizes):
     # (Assumes assertions are handled or kept)
     num_filts = len(bin_sizes)
     
-    if num_filts == 1:
-        return compute_euler_curve(vec_st, bin_sizes[0])
-        
     t_mins = np.array([size[0] for size in bin_sizes])
     t_maxs = np.array([size[1] for size in bin_sizes])
     resolutions = np.array([size[-1] for size in bin_sizes]).astype(int)
@@ -54,7 +50,7 @@ img_c3 = np.random.randint(0, 256, (N,N) , dtype=np.uint8)
 
 list_of_minimal_grades_top_cell = euprima.list_of_minimal_grades_top_cell(img_c1, img_c2, img_c3);
 
-ecp_hale_t_eulearning = compute_euler_profile_vectorized(list_of_minimal_grades_top_cell, [(0,255,256), (0,255,256), (0,255,256)])
+ecp_hale_t_eulearning = compute_euler_profile(list_of_minimal_grades_top_cell, [(0,255,256), (0,255,256), (0,255,256)]).transpose()
 ecp_hale_t_euprima = euprima.ecp_hale_t_2d3c(img_c1, img_c2, img_c3, 255, 255, 255)
 ecp_hale_t_eulearning_euprima = euprima.ecp_hale_eulearning_2d3c(list_of_minimal_grades_top_cell, 255, 255, 255)
 
@@ -62,7 +58,7 @@ testing_utils.check_pairwise_equality([ecp_hale_t_eulearning, ecp_hale_t_euprima
 
 list_of_minimal_grades_vertex = euprima.list_of_minimal_grades_vertex(img_c1, img_c2, img_c3);
 
-ecp_hale_v_eulearning = compute_euler_profile_vectorized(list_of_minimal_grades_vertex, [(0,255,256), (0,255,256), (0,255,256)])
+ecp_hale_v_eulearning = compute_euler_profile(list_of_minimal_grades_vertex, [(0,255,256), (0,255,256), (0,255,256)]).transpose()
 ecp_hale_v_euprima = euprima.ecp_hale_v_2d3c(img_c1, img_c2, img_c3, 255, 255, 255)
 ecp_hale_v_eulearning_euprima = euprima.ecp_hale_eulearning_2d3c(list_of_minimal_grades_vertex, 255, 255, 255)
 
