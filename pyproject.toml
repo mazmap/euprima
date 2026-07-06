@@ -4,13 +4,13 @@ build-backend = "scikit_build_core.build"
 
 [project]
 name = "euprima"
-version = "0.1.0"
+version = "0.1.1"
 description = "Euler characteristic profiles for image analysis"
 readme = "README.md"
 requires-python = ">=3.8"
 dependencies = [
     "numpy",
-    "pandas"
+    "pandas",
 ]
 
 [tool.scikit-build]
